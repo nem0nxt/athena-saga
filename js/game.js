@@ -480,14 +480,56 @@ class Game {
             ctx.restore();
         }
         
-        // Health text next to heart (Rastan style)
+        // RASTAN SAGA STYLE: Health BAR next to heart
+        const barX = heartX + heartSize + 10;
+        const barY = heartY + 8;
+        const barWidth = 120;
+        const barHeight = 16;
+        
+        // Bar background (dark)
+        ctx.fillStyle = '#1a0a0a';
+        ctx.fillRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
+        
+        // Bar border (golden arcade style)
+        ctx.strokeStyle = '#DAA520';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
+        
+        // Health bar fill (gradient from red to dark red)
+        const healthWidth = barWidth * healthPercent;
+        if (healthWidth > 0) {
+            const gradient = ctx.createLinearGradient(barX, barY, barX, barY + barHeight);
+            if (healthPercent > 0.5) {
+                gradient.addColorStop(0, '#FF4444');
+                gradient.addColorStop(0.5, '#CC0000');
+                gradient.addColorStop(1, '#880000');
+            } else if (healthPercent > 0.25) {
+                gradient.addColorStop(0, '#FF6600');
+                gradient.addColorStop(0.5, '#CC4400');
+                gradient.addColorStop(1, '#882200');
+            } else {
+                // Critical - pulsing red
+                const pulse = 0.7 + Math.sin(Date.now() / 100) * 0.3;
+                gradient.addColorStop(0, `rgba(255, 0, 0, ${pulse})`);
+                gradient.addColorStop(0.5, `rgba(180, 0, 0, ${pulse})`);
+                gradient.addColorStop(1, `rgba(100, 0, 0, ${pulse})`);
+            }
+            ctx.fillStyle = gradient;
+            ctx.fillRect(barX, barY, healthWidth, barHeight);
+            
+            // Shine effect on bar
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(barX, barY, healthWidth, barHeight / 3);
+        }
+        
+        // "LIFE" text above bar (arcade style)
         ctx.save();
-        ctx.font = 'bold 14px "Press Start 2P", monospace';
-        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 10px "Press Start 2P", monospace';
+        ctx.fillStyle = '#FFD700';
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
-        ctx.strokeText(`${Math.ceil(healthPercent * 100)}%`, heartX + heartSize + 8, heartY + heartSize/2 + 5);
-        ctx.fillText(`${Math.ceil(healthPercent * 100)}%`, heartX + heartSize + 8, heartY + heartSize/2 + 5);
+        ctx.lineWidth = 2;
+        ctx.strokeText('LIFE', barX, barY - 6);
+        ctx.fillText('LIFE', barX, barY - 6);
         ctx.restore();
         
         // Add pulsing glow effect when health is critical

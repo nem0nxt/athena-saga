@@ -1,17 +1,17 @@
-// Athena - Player Character (Updated with pixel art sprites)
+// Athena - Player Character (Rastan Saga style large sprite)
 
 class Player {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.width = 40;
-        this.height = 56;
+        this.width = 48;
+        this.height = 64;
         this.velX = 0;
         this.velY = 0;
         
         // Physics
         this.speed = 4;
-        this.jumpForce = -14;
+        this.jumpForce = -15;
         this.gravity = 0.6;
         this.friction = 0.85;
         
@@ -37,8 +37,8 @@ class Player {
         this.spriteFrame = 0;
         this.spriteTimer = 0;
         
-        // Attack hitbox
-        this.attackBox = { x: 0, y: 0, width: 60, height: 40, active: false };
+        // Attack hitbox (larger for bigger sprite)
+        this.attackBox = { x: 0, y: 0, width: 70, height: 48, active: false };
         
         // Effects
         this.particles = [];
@@ -461,33 +461,188 @@ class Player {
     }
     
     drawAthenaFallback(ctx) {
-        // Simplified fallback rendering
-        const bounce = this.state === 'run' ? Math.sin(this.animFrame * Math.PI / 2) * 2 : 0;
+        // RASTAN SAGA STYLE - Large, detailed warrior goddess
+        const bounce = this.state === 'run' ? Math.sin(this.animFrame * Math.PI / 2) * 3 : 0;
+        const attackOffset = this.state === 'attack' ? this.spriteFrame * 4 : 0;
         
-        // Body
-        ctx.fillStyle = '#f5f5dc';
-        ctx.fillRect(12, 24 - bounce, 16, 24);
+        // === LEGS (muscular warrior legs) ===
+        ctx.fillStyle = '#E8C4A0'; // Skin tone
+        // Left leg
+        ctx.fillRect(10, 46 - bounce, 10, 18);
+        // Right leg  
+        ctx.fillRect(28, 44 - bounce, 10, 18);
         
-        // Armor
-        ctx.fillStyle = '#cd7f32';
-        ctx.fillRect(12, 20 - bounce, 16, 12);
+        // Sandal straps
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(10, 50 - bounce, 10, 2);
+        ctx.fillRect(10, 56 - bounce, 10, 2);
+        ctx.fillRect(28, 48 - bounce, 10, 2);
+        ctx.fillRect(28, 54 - bounce, 10, 2);
         
-        // Head
-        ctx.fillStyle = '#f4c7a5';
-        ctx.fillRect(14, 4 - bounce, 12, 14);
+        // Feet/sandals
+        ctx.fillStyle = '#654321';
+        ctx.fillRect(8, 62 - bounce, 14, 4);
+        ctx.fillRect(26, 60 - bounce, 14, 4);
         
-        // Helmet
-        ctx.fillStyle = '#cd7f32';
-        ctx.fillRect(10, 0 - bounce, 20, 6);
+        // === WHITE CHITON (flowing dress) ===
+        ctx.fillStyle = '#F5F5F5';
+        ctx.beginPath();
+        ctx.moveTo(8, 30 - bounce);
+        ctx.lineTo(40, 30 - bounce);
+        ctx.lineTo(42, 52 - bounce);
+        ctx.lineTo(6, 52 - bounce);
+        ctx.closePath();
+        ctx.fill();
         
-        // Plume
-        ctx.fillStyle = '#cc2222';
-        ctx.fillRect(16, -8 - bounce, 8, 10);
+        // Chiton folds (shadows)
+        ctx.fillStyle = '#D0D0D0';
+        ctx.fillRect(14, 32 - bounce, 3, 18);
+        ctx.fillRect(24, 34 - bounce, 3, 16);
+        ctx.fillRect(34, 32 - bounce, 3, 18);
         
-        // Legs
-        ctx.fillStyle = '#f4c7a5';
-        ctx.fillRect(12, 46 - bounce, 6, 10);
-        ctx.fillRect(22, 46 - bounce, 6, 10);
+        // Golden belt
+        ctx.fillStyle = '#FFD700';
+        ctx.fillRect(6, 28 - bounce, 36, 5);
+        ctx.fillStyle = '#DAA520';
+        ctx.fillRect(20, 28 - bounce, 8, 5); // Belt buckle
+        
+        // === BRONZE CUIRASS (chest armor) ===
+        ctx.fillStyle = '#CD7F32';
+        ctx.fillRect(8, 14 - bounce, 32, 16);
+        
+        // Armor details - muscle lines
+        ctx.fillStyle = '#B8860B';
+        ctx.fillRect(14, 16 - bounce, 2, 12);
+        ctx.fillRect(32, 16 - bounce, 2, 12);
+        ctx.fillStyle = '#DEB887';
+        ctx.fillRect(20, 16 - bounce, 8, 2); // Chest highlight
+        
+        // Shoulder pauldrons
+        ctx.fillStyle = '#CD7F32';
+        ctx.fillRect(2, 12 - bounce, 10, 8);
+        ctx.fillRect(36, 12 - bounce, 10, 8);
+        ctx.fillStyle = '#DAA520';
+        ctx.fillRect(4, 14 - bounce, 6, 4);
+        ctx.fillRect(38, 14 - bounce, 6, 4);
+        
+        // === ARMS ===
+        ctx.fillStyle = '#E8C4A0';
+        // Left arm (shield arm)
+        ctx.fillRect(0, 18 - bounce, 8, 20);
+        // Right arm (spear arm)
+        if (this.state === 'attack') {
+            ctx.fillRect(38 + attackOffset, 16 - bounce, 10, 6);
+            ctx.fillRect(44 + attackOffset, 18 - bounce, 8, 16);
+        } else {
+            ctx.fillRect(40, 18 - bounce, 8, 20);
+        }
+        
+        // === SHIELD (large round hoplon with owl) ===
+        if (this.blocking) {
+            // Shield raised in front
+            ctx.fillStyle = '#CD7F32';
+            ctx.beginPath();
+            ctx.arc(-4, 28 - bounce, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#8B4513';
+            ctx.beginPath();
+            ctx.arc(-4, 28 - bounce, 14, 0, Math.PI * 2);
+            ctx.fill();
+            // Owl emblem
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(-4, 28 - bounce, 6, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // Shield at side
+            ctx.fillStyle = '#CD7F32';
+            ctx.beginPath();
+            ctx.arc(-2, 32 - bounce, 14, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#8B4513';
+            ctx.beginPath();
+            ctx.arc(-2, 32 - bounce, 10, 0, Math.PI * 2);
+            ctx.fill();
+            // Owl emblem
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(-6, 28 - bounce, 8, 8);
+        }
+        
+        // === HEAD ===
+        ctx.fillStyle = '#E8C4A0';
+        ctx.fillRect(12, -2 - bounce, 24, 18);
+        
+        // Face details
+        ctx.fillStyle = '#8B4513'; // Eyes
+        ctx.fillRect(16, 4 - bounce, 4, 3);
+        ctx.fillRect(28, 4 - bounce, 4, 3);
+        ctx.fillStyle = '#CC6666'; // Lips
+        ctx.fillRect(20, 10 - bounce, 8, 2);
+        
+        // === CORINTHIAN HELMET ===
+        ctx.fillStyle = '#CD7F32';
+        // Helmet dome
+        ctx.fillRect(10, -10 - bounce, 28, 14);
+        // Cheek guards
+        ctx.fillRect(8, 0 - bounce, 6, 12);
+        ctx.fillRect(34, 0 - bounce, 6, 12);
+        // Nose guard
+        ctx.fillStyle = '#B8860B';
+        ctx.fillRect(22, -2 - bounce, 4, 10);
+        // Eye slits (dark)
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(14, 2 - bounce, 8, 4);
+        ctx.fillRect(26, 2 - bounce, 8, 4);
+        
+        // === HELMET PLUME (flowing horsehair crest) ===
+        ctx.fillStyle = '#CC2222';
+        const plumeWave = Math.sin(Date.now() / 150) * 2;
+        // Plume base
+        ctx.fillRect(18, -18 - bounce, 12, 10);
+        // Flowing plume
+        ctx.fillRect(14 + plumeWave, -26 - bounce, 20, 10);
+        ctx.fillRect(10 + plumeWave * 1.5, -32 - bounce, 28, 8);
+        // Plume highlight
+        ctx.fillStyle = '#FF4444';
+        ctx.fillRect(20 + plumeWave, -24 - bounce, 8, 4);
+        
+        // === SPEAR ===
+        ctx.fillStyle = '#8B4513'; // Wood shaft
+        if (this.state === 'attack') {
+            // Thrusting spear
+            ctx.fillRect(46, 18 - bounce, 40 + attackOffset * 3, 4);
+            // Spear tip
+            ctx.fillStyle = '#C0C0C0';
+            ctx.beginPath();
+            ctx.moveTo(86 + attackOffset * 3, 14 - bounce);
+            ctx.lineTo(96 + attackOffset * 3, 20 - bounce);
+            ctx.lineTo(86 + attackOffset * 3, 26 - bounce);
+            ctx.closePath();
+            ctx.fill();
+            // Tip shine
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(88 + attackOffset * 3, 18 - bounce, 4, 2);
+        } else {
+            // Spear held upright
+            ctx.fillRect(44, -30 - bounce, 4, 68);
+            // Spear tip
+            ctx.fillStyle = '#C0C0C0';
+            ctx.beginPath();
+            ctx.moveTo(40, -30 - bounce);
+            ctx.lineTo(46, -44 - bounce);
+            ctx.lineTo(52, -30 - bounce);
+            ctx.closePath();
+            ctx.fill();
+            // Weapon level glow
+            if (this.weaponLevel >= 2) {
+                ctx.fillStyle = this.weaponLevel >= 3 ? '#FF6600' : '#FFD700';
+                ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 100) * 0.3;
+                ctx.beginPath();
+                ctx.arc(46, -36 - bounce, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
     }
     
     drawParticles(ctx, cameraX) {
