@@ -1,0 +1,183 @@
+/* Athena Saga - Retro Game Styling */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0a0a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', cursive;
+    overflow: hidden;
+}
+
+#game-container {
+    position: relative;
+    border: 4px solid #c9a227;
+    box-shadow: 0 0 20px rgba(201, 162, 39, 0.5),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+    background: #1a1a2e;
+}
+
+#gameCanvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+#ui-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+}
+
+#health-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#health-bar span {
+    color: #c9a227;
+    font-size: 10px;
+    text-shadow: 2px 2px #000;
+}
+
+#health-fill {
+    width: 150px;
+    height: 16px;
+    background: linear-gradient(to bottom, #ff4444, #aa0000);
+    border: 2px solid #fff;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    transition: width 0.2s;
+}
+
+#score {
+    color: #c9a227;
+    font-size: 12px;
+    text-shadow: 2px 2px #000;
+}
+
+/* Screens */
+#start-screen,
+#game-over-screen,
+#victory-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    text-align: center;
+    z-index: 100;
+}
+
+#start-screen h1,
+#game-over-screen h1,
+#victory-screen h1 {
+    font-size: 28px;
+    color: #c9a227;
+    text-shadow: 3px 3px #8b4513, 6px 6px #000;
+    margin-bottom: 20px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.subtitle {
+    font-size: 12px;
+    color: #87ceeb;
+    margin-bottom: 40px;
+}
+
+.controls-info {
+    background: rgba(201, 162, 39, 0.2);
+    padding: 20px;
+    border: 2px solid #c9a227;
+    margin-bottom: 30px;
+}
+
+.controls-info p {
+    font-size: 10px;
+    margin: 8px 0;
+    color: #fff;
+}
+
+button {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    padding: 15px 40px;
+    background: linear-gradient(to bottom, #c9a227, #8b4513);
+    border: 3px solid #fff;
+    color: #fff;
+    cursor: pointer;
+    text-shadow: 2px 2px #000;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background: linear-gradient(to bottom, #e0b830, #a05a1a);
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(201, 162, 39, 0.8);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Scanline effect */
+#game-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1),
+        rgba(0, 0, 0, 0.1) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+}
+
+/* Game Over specific */
+#game-over-screen h1 {
+    color: #ff4444;
+}
+
+#game-over-screen p,
+#victory-screen p {
+    font-size: 12px;
+    margin: 10px 0;
+    color: #fff;
+}
+
+#victory-screen h1 {
+    color: #ffd700;
+}

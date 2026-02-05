@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athena Saga - Retro Side-Scrolling Action</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="480"></canvas>
+        <div id="ui-overlay">
+            <div id="health-bar">
+                <span>HEALTH</span>
+                <div id="health-fill"></div>
+            </div>
+            <div id="score">SCORE: <span id="score-value">0</span></div>
+        </div>
+        <div id="start-screen">
+            <h1>⚔️ ATHENA SAGA ⚔️</h1>
+            <p class="subtitle">Goddess of Wisdom and War</p>
+            <div class="controls-info">
+                <p>← → Arrow Keys: Move</p>
+                <p>↑ or SPACE: Jump</p>
+                <p>Z: Spear Attack</p>
+                <p>X: Shield Block</p>
+            </div>
+            <button id="start-btn">START GAME</button>
+        </div>
+        <div id="game-over-screen" class="hidden">
+            <h1>GAME OVER</h1>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <button id="retry-btn">RETRY</button>
+        </div>
+        <div id="victory-screen" class="hidden">
+            <h1>🏆 VICTORY! 🏆</h1>
+            <p>You have defeated the Cyclops!</p>
+            <p>Final Score: <span id="victory-score">0</span></p>
+            <button id="victory-btn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script src="js/level.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/enemies.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
