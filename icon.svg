@@ -1,0 +1,6 @@
+<svg height="128" viewBox="0 0 128 128" width="128" xmlns="http://www.w3.org/2000/svg">
+  <rect fill="#3d5a80" height="128" width="128"/>
+  <circle cx="64" cy="50" fill="#ffd700" r="30"/>
+  <polygon fill="#ffd700" points="64,15 70,35 90,35 74,48 80,70 64,55 48,70 54,48 38,35 58,35" stroke="#b8860b" stroke-width="2"/>
+  <text fill="#ffffff" font-family="Arial Black" font-size="16" text-anchor="middle" x="64" y="110">ATHENA</text>
+</svg>
