@@ -1,4 +1,4 @@
-// Athena Saga - Main Game Engine (Updated with heartbeat health indicator)
+// Athena Saga - Main Game Engine (Updated with heartbeat health indicator and audio)
 
 class Game {
     constructor() {
@@ -52,6 +52,7 @@ class Game {
         // Initialize
         this.setupInput();
         this.setupButtons();
+        this.setupAudioControls();
         
         // Start game loop
         requestAnimationFrame((time) => this.gameLoop(time));
@@ -126,7 +127,69 @@ class Game {
         });
     }
     
+    setupAudioControls() {
+        const muteBtn = document.getElementById('mute-btn');
+        const musicBtn = document.getElementById('music-btn');
+        const sfxBtn = document.getElementById('sfx-btn');
+        
+        if (muteBtn) {
+            muteBtn.addEventListener('click', () => {
+                // Initialize audio on first interaction
+                if (window.audioManager) {
+                    window.audioManager.init();
+                    const muted = window.audioManager.toggleMute();
+                    muteBtn.textContent = muted ? '🔇' : '🔊';
+                    muteBtn.classList.toggle('muted', muted);
+                }
+            });
+        }
+        
+        if (musicBtn) {
+            musicBtn.addEventListener('click', () => {
+                if (window.audioManager) {
+                    window.audioManager.init();
+                    const muted = window.audioManager.toggleMusic();
+                    musicBtn.textContent = muted ? '🎵' : '🎵';
+                    musicBtn.classList.toggle('muted', muted);
+                    
+                    // Restart music if unmuted and playing
+                    if (!muted && this.state === 'playing') {
+                        if (this.enemyManager && this.enemyManager.bossActive) {
+                            window.audioManager.playBossTheme();
+                        } else {
+                            window.audioManager.playMainTheme();
+                        }
+                    }
+                }
+            });
+        }
+        
+        if (sfxBtn) {
+            sfxBtn.addEventListener('click', () => {
+                if (window.audioManager) {
+                    window.audioManager.init();
+                    const muted = window.audioManager.toggleSFX();
+                    sfxBtn.textContent = muted ? '💥' : '💥';
+                    sfxBtn.classList.toggle('muted', muted);
+                    
+                    // Stop or start heartbeat
+                    if (muted) {
+                        window.audioManager.stopHeartbeat();
+                    } else if (this.state === 'playing' && this.player) {
+                        const healthPercent = this.player.health / this.player.maxHealth;
+                        window.audioManager.updateHeartbeatRate(healthPercent);
+                    }
+                }
+            });
+        }
+    }
+    
     startGame() {
+        // Initialize audio on game start (user interaction)
+        if (window.audioManager) {
+            window.audioManager.init();
+        }
+        
         // Reset game state
         this.state = 'playing';
         this.score = 0;
@@ -157,6 +220,12 @@ class Game {
             width: 32,
             height: 32
         }));
+        
+        // Start music and heartbeat
+        if (window.audioManager) {
+            window.audioManager.playMainTheme();
+            window.audioManager.startHeartbeat(60);
+        }
         
         // Update UI
         this.updateUI();
@@ -288,6 +357,11 @@ class Game {
         if (this.heartbeatTimer >= frameDuration) {
             this.heartbeatTimer = 0;
             this.heartbeatFrame = (this.heartbeatFrame + 1) % 8;
+        }
+        
+        // Update audio heartbeat rate
+        if (window.audioManager) {
+            window.audioManager.updateHeartbeatRate(healthPercent);
         }
     }
     
@@ -580,6 +654,12 @@ class Game {
         this.state = 'gameover';
         this.finalScore.textContent = this.score;
         this.gameOverScreen.classList.remove('hidden');
+        
+        // Stop music and heartbeat, play game over sound
+        if (window.audioManager) {
+            window.audioManager.stopHeartbeat();
+            window.audioManager.playGameOverSound();
+        }
     }
     
     victory() {
@@ -587,6 +667,12 @@ class Game {
         this.score += 500; // Victory bonus
         this.victoryScore.textContent = this.score;
         this.victoryScreen.classList.remove('hidden');
+        
+        // Stop music and heartbeat, play victory jingle
+        if (window.audioManager) {
+            window.audioManager.stopHeartbeat();
+            window.audioManager.playVictoryJingle();
+        }
     }
 }
 

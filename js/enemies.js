@@ -205,11 +205,21 @@ class Enemy {
                         // Swing attack
                         this.state = 'attack';
                         this.attackCooldown = 1500;
+                        
+                        // Play boss attack sound
+                        if (window.audioManager) {
+                            window.audioManager.playBossAttack();
+                        }
                     } else {
                         // Stomp attack
                         this.state = 'stomp';
                         this.attackCooldown = 2000;
                         this.stompCooldown = 500;
+                        
+                        // Play boss roar/stomp sound
+                        if (window.audioManager) {
+                            window.audioManager.playBossRoar();
+                        }
                     }
                 } else {
                     this.state = 'idle';
@@ -266,6 +276,11 @@ class Enemy {
         // Hit particles
         this.addHitParticles();
         
+        // Play enemy hit sound
+        if (window.audioManager) {
+            window.audioManager.playEnemyHit();
+        }
+        
         if (this.health <= 0) {
             this.die();
             return true;
@@ -276,6 +291,11 @@ class Enemy {
     die() {
         this.active = false;
         this.addDeathParticles();
+        
+        // Play enemy death sound
+        if (window.audioManager) {
+            window.audioManager.playEnemyDeath();
+        }
     }
     
     getHitbox() {
@@ -560,16 +580,38 @@ class Enemy {
 class EnemyManager {
     constructor() {
         this.enemies = [];
+        this.bossActive = false;
+        this.bossTriggered = false;
     }
     
     spawn(enemyData) {
         this.enemies = enemyData.map(e => new Enemy(e.x, e.y, e.type));
+        this.bossActive = false;
+        this.bossTriggered = false;
     }
     
     update(player, platforms, deltaTime) {
         this.enemies.forEach(enemy => {
             enemy.update(player, platforms, deltaTime);
         });
+        
+        // Check if player entered boss area
+        const boss = this.enemies.find(e => e.isBoss && e.active);
+        if (boss && !this.bossTriggered && Math.abs(player.x - boss.x) < 400) {
+            this.bossTriggered = true;
+            this.bossActive = true;
+            
+            // Switch to boss music
+            if (window.audioManager) {
+                window.audioManager.playBossTheme();
+                window.audioManager.playBossRoar();
+            }
+        }
+        
+        // Check if boss was defeated
+        if (this.bossActive && (!boss || !boss.active)) {
+            this.bossActive = false;
+        }
     }
     
     draw(ctx, cameraX) {

@@ -68,6 +68,11 @@ class Player {
                 this.grounded = false;
                 this.jumping = true;
                 this.addJumpParticles();
+                
+                // Play jump sound
+                if (window.audioManager) {
+                    window.audioManager.playJump();
+                }
             }
         }
         
@@ -106,6 +111,10 @@ class Player {
                     this.grounded = true;
                     if (Math.abs(this.velX) > 1) {
                         this.addLandParticles();
+                        // Play landing sound
+                        if (window.audioManager) {
+                            window.audioManager.playLanding();
+                        }
                     }
                 }
             }
@@ -150,6 +159,11 @@ class Player {
         this.animFrame = 0;
         this.spriteFrame = 0;
         this.addAttackParticles();
+        
+        // Play spear attack sound
+        if (window.audioManager) {
+            window.audioManager.playSpearAttack();
+        }
         
         // Attack duration
         setTimeout(() => {
@@ -239,6 +253,16 @@ class Player {
             // Reduced damage when blocking
             amount = Math.floor(amount * 0.2);
             this.addBlockParticles();
+            
+            // Play shield block sound
+            if (window.audioManager) {
+                window.audioManager.playShieldBlock();
+            }
+        } else {
+            // Play player damage sound
+            if (window.audioManager) {
+                window.audioManager.playPlayerDamage();
+            }
         }
         
         this.health -= amount;
@@ -256,11 +280,21 @@ class Player {
     heal(amount) {
         this.health = Math.min(this.maxHealth, this.health + amount);
         this.addHealParticles();
+        
+        // Play power-up sound for healing
+        if (window.audioManager) {
+            window.audioManager.playPowerUp();
+        }
     }
     
     upgradeWeapon() {
         this.weaponLevel = Math.min(3, this.weaponLevel + 1);
         this.addPowerUpParticles();
+        
+        // Play power-up sound
+        if (window.audioManager) {
+            window.audioManager.playPowerUp();
+        }
     }
     
     // Particle effects
