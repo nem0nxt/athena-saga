@@ -477,67 +477,341 @@ class Enemy {
     }
     
     drawSkeletonFallback(ctx) {
+        // RASTAN SAGA STYLE - Detailed skeleton warrior
         const walk = this.state === 'chase' || this.state === 'patrol' 
-            ? Math.sin(this.animFrame * Math.PI / 2) * 3 : 0;
+            ? Math.sin(this.animFrame * Math.PI / 2) * 4 : 0;
+        const attack = this.state === 'attack' ? this.animFrame * 3 : 0;
         
-        ctx.fillStyle = '#e8e8d0';
-        ctx.fillRect(8, 0, 16, 16);
-        ctx.fillStyle = '#ff4444';
-        ctx.fillRect(11, 5, 3, 4);
-        ctx.fillRect(18, 5, 3, 4);
-        ctx.fillRect(14, 18, 4, 14);
-        for (let i = 0; i < 4; i++) {
-            ctx.fillStyle = '#d8d8c0';
-            ctx.fillRect(6, 20 + i * 3, 20, 2);
+        // === SKULL ===
+        ctx.fillStyle = '#E8E8D0'; // Bone color
+        // Main skull
+        ctx.fillRect(8, 0, 18, 16);
+        // Jaw
+        ctx.fillStyle = '#D8D8C0';
+        ctx.fillRect(10, 14, 14, 6);
+        
+        // Eye sockets (glowing red)
+        ctx.fillStyle = '#1a0a0a';
+        ctx.fillRect(10, 4, 6, 6);
+        ctx.fillRect(18, 4, 6, 6);
+        // Glowing eyes
+        ctx.fillStyle = '#FF0000';
+        ctx.fillRect(11, 5, 4, 4);
+        ctx.fillRect(19, 5, 4, 4);
+        // Eye glow effect
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        ctx.fillRect(9, 3, 8, 8);
+        ctx.fillRect(17, 3, 8, 8);
+        
+        // Nose hole
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(15, 10, 4, 4);
+        
+        // Teeth
+        ctx.fillStyle = '#F0F0E0';
+        for (let i = 0; i < 5; i++) {
+            ctx.fillRect(11 + i * 3, 16, 2, 3);
         }
-        ctx.fillRect(8 - walk, 38, 4, 10);
-        ctx.fillRect(20 + walk, 38, 4, 10);
+        
+        // === SPINE & RIBCAGE ===
+        ctx.fillStyle = '#E8E8D0';
+        // Spine
+        ctx.fillRect(15, 20, 4, 18);
+        // Ribs
+        for (let i = 0; i < 4; i++) {
+            ctx.fillStyle = '#D8D8C0';
+            ctx.fillRect(6, 22 + i * 4, 22, 3);
+            // Rib shadow
+            ctx.fillStyle = '#C8C8B0';
+            ctx.fillRect(6, 24 + i * 4, 22, 1);
+        }
+        
+        // Pelvis
+        ctx.fillStyle = '#E8E8D0';
+        ctx.fillRect(8, 36, 18, 6);
+        
+        // === ARM BONES ===
+        ctx.fillStyle = '#D8D8C0';
+        // Left arm (shield arm)
+        ctx.fillRect(0, 22, 6, 4);
+        ctx.fillRect(-2, 26, 4, 14);
+        // Right arm (sword arm)
+        ctx.fillRect(28, 22, 6, 4);
+        ctx.fillRect(30 + attack, 26, 4, 14);
+        
+        // === LEG BONES ===
+        ctx.fillStyle = '#E8E8D0';
+        // Left leg
+        ctx.fillRect(8 - walk, 42, 6, 16);
+        ctx.fillRect(6 - walk, 56, 8, 4);
+        // Right leg
+        ctx.fillRect(20 + walk, 42, 6, 16);
+        ctx.fillRect(18 + walk, 56, 8, 4);
+        
+        // === RUSTY SWORD ===
+        ctx.fillStyle = '#8B4513'; // Handle
+        ctx.fillRect(32 + attack, 38, 4, 12);
+        ctx.fillStyle = '#A0A0A0'; // Blade
+        ctx.fillRect(33 + attack, 18, 3, 22);
+        ctx.fillStyle = '#C0C0C0'; // Blade highlight
+        ctx.fillRect(34 + attack, 20, 1, 18);
+        // Rust spots
+        ctx.fillStyle = '#8B4500';
+        ctx.fillRect(33 + attack, 24, 2, 2);
+        ctx.fillRect(34 + attack, 32, 2, 2);
+        
+        // === TATTERED CLOTH ===
+        ctx.fillStyle = '#4a3a2a';
+        ctx.fillRect(10, 20, 14, 4);
+        // Hanging cloth
+        ctx.fillStyle = '#3a2a1a';
+        ctx.fillRect(12, 24, 4, 8 + Math.sin(Date.now() / 200) * 2);
+        ctx.fillRect(18, 24, 4, 6 + Math.sin(Date.now() / 180) * 2);
     }
     
     drawHarpyFallback(ctx) {
-        const wingFlap = Math.sin(this.animFrame * Math.PI / 2) * 15;
+        // RASTAN SAGA STYLE - Menacing harpy with detailed wings
+        const wingFlap = Math.sin(this.animFrame * Math.PI / 2) * 18;
+        const bodyBob = Math.sin(this.animFrame * Math.PI) * 2;
         
-        ctx.fillStyle = '#6a3a8a';
+        // === FEATHERED WINGS ===
+        // Left wing
+        ctx.fillStyle = '#5a2a6a';
         ctx.beginPath();
-        ctx.moveTo(8, 18);
-        ctx.lineTo(-15, 8 - wingFlap);
-        ctx.lineTo(-10, 24);
+        ctx.moveTo(10, 18 + bodyBob);
+        ctx.lineTo(-20, 4 - wingFlap);
+        ctx.lineTo(-25, 10 - wingFlap);
+        ctx.lineTo(-18, 20 - wingFlap * 0.5);
+        ctx.lineTo(-8, 26);
         ctx.closePath();
         ctx.fill();
         
+        // Left wing feathers
+        ctx.fillStyle = '#4a1a5a';
+        ctx.fillRect(-22, 6 - wingFlap, 4, 12);
+        ctx.fillRect(-16, 8 - wingFlap, 4, 10);
+        ctx.fillRect(-10, 10 - wingFlap * 0.7, 4, 10);
+        
+        // Right wing
+        ctx.fillStyle = '#5a2a6a';
         ctx.beginPath();
-        ctx.moveTo(32, 18);
-        ctx.lineTo(55, 8 - wingFlap);
-        ctx.lineTo(50, 24);
+        ctx.moveTo(30, 18 + bodyBob);
+        ctx.lineTo(60, 4 - wingFlap);
+        ctx.lineTo(65, 10 - wingFlap);
+        ctx.lineTo(58, 20 - wingFlap * 0.5);
+        ctx.lineTo(48, 26);
         ctx.closePath();
         ctx.fill();
         
-        ctx.fillStyle = '#ddb8a0';
-        ctx.fillRect(12, 12, 16, 18);
-        ctx.fillRect(14, 0, 12, 12);
+        // Right wing feathers
+        ctx.fillStyle = '#4a1a5a';
+        ctx.fillRect(58, 6 - wingFlap, 4, 12);
+        ctx.fillRect(52, 8 - wingFlap, 4, 10);
+        ctx.fillRect(46, 10 - wingFlap * 0.7, 4, 10);
         
-        ctx.fillStyle = '#ffff00';
-        ctx.fillRect(16, 4, 4, 4);
-        ctx.fillRect(22, 4, 4, 4);
+        // === BODY ===
+        ctx.fillStyle = '#DDB8A0';
+        // Torso
+        ctx.fillRect(14, 12 + bodyBob, 14, 18);
+        
+        // === TALONED LEGS ===
+        ctx.fillStyle = '#8B7355';
+        ctx.fillRect(14, 28 + bodyBob, 4, 10);
+        ctx.fillRect(24, 28 + bodyBob, 4, 10);
+        // Talons
+        ctx.fillStyle = '#4a4a4a';
+        ctx.fillRect(12, 36 + bodyBob, 8, 3);
+        ctx.fillRect(22, 36 + bodyBob, 8, 3);
+        // Sharp claws
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(10, 38 + bodyBob, 3, 2);
+        ctx.fillRect(16, 38 + bodyBob, 3, 2);
+        ctx.fillRect(20, 38 + bodyBob, 3, 2);
+        ctx.fillRect(26, 38 + bodyBob, 3, 2);
+        
+        // === HEAD ===
+        ctx.fillStyle = '#DDB8A0';
+        ctx.fillRect(15, 0 + bodyBob, 12, 14);
+        
+        // Wild hair
+        ctx.fillStyle = '#2a1a2a';
+        ctx.fillRect(13, -4 + bodyBob, 16, 6);
+        ctx.fillRect(10, -2 + bodyBob, 6, 8);
+        ctx.fillRect(26, -2 + bodyBob, 6, 8);
+        // Hair strands flowing
+        ctx.fillRect(8, 0 + bodyBob + Math.sin(Date.now() / 150) * 2, 4, 10);
+        ctx.fillRect(30, 0 + bodyBob + Math.sin(Date.now() / 180) * 2, 4, 10);
+        
+        // Menacing yellow eyes
+        ctx.fillStyle = '#FFFF00';
+        ctx.fillRect(16, 4 + bodyBob, 4, 5);
+        ctx.fillRect(22, 4 + bodyBob, 4, 5);
+        // Pupils
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(17, 5 + bodyBob, 2, 3);
+        ctx.fillRect(23, 5 + bodyBob, 2, 3);
+        
+        // Angry mouth
+        ctx.fillStyle = '#800000';
+        ctx.fillRect(17, 10 + bodyBob, 8, 3);
+        // Fangs
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(18, 10 + bodyBob, 2, 4);
+        ctx.fillRect(22, 10 + bodyBob, 2, 4);
+        
+        // === FEATHERED SHOULDERS ===
+        ctx.fillStyle = '#5a2a6a';
+        ctx.fillRect(8, 12 + bodyBob, 8, 6);
+        ctx.fillRect(26, 12 + bodyBob, 8, 6);
     }
     
     drawCyclopsFallback(ctx) {
-        const walk = this.state === 'walk' ? Math.sin(this.animFrame * Math.PI / 2) * 5 : 0;
+        // RASTAN SAGA STYLE - Massive detailed Cyclops boss
+        const walk = this.state === 'walk' ? Math.sin(this.animFrame * Math.PI / 2) * 6 : 0;
+        const stomp = this.state === 'stomp' ? Math.abs(Math.sin(this.animFrame * Math.PI)) * 8 : 0;
+        const attack = this.state === 'attack' ? this.animFrame * 4 : 0;
         
-        ctx.fillStyle = '#885533';
-        ctx.fillRect(15 - walk, 70, 18, 26);
-        ctx.fillRect(47 + walk, 70, 18, 26);
+        // === MASSIVE LEGS ===
+        ctx.fillStyle = '#6B4423'; // Dark skin
+        // Left leg
+        ctx.fillRect(10 - walk, 65, 22, 31);
+        // Right leg
+        ctx.fillRect(48 + walk, 65 - stomp, 22, 31 + stomp);
         
-        ctx.fillStyle = '#996644';
-        ctx.fillRect(10, 30, 60, 45);
+        // Leg muscles/shadows
+        ctx.fillStyle = '#5A3318';
+        ctx.fillRect(14 - walk, 70, 6, 20);
+        ctx.fillRect(52 + walk, 70 - stomp, 6, 20);
         
-        ctx.fillStyle = '#aa7755';
-        ctx.fillRect(20, 0, 40, 35);
+        // Feet
+        ctx.fillStyle = '#4A2A10';
+        ctx.fillRect(5 - walk, 92, 30, 8);
+        ctx.fillRect(43 + walk, 92, 30, 8);
+        // Toes
+        ctx.fillStyle = '#3A1A08';
+        for (let i = 0; i < 4; i++) {
+            ctx.fillRect(8 - walk + i * 7, 96, 5, 4);
+            ctx.fillRect(46 + walk + i * 7, 96, 5, 4);
+        }
         
-        ctx.fillStyle = '#ffffcc';
-        ctx.fillRect(30, 10, 20, 16);
-        ctx.fillStyle = '#aa0000';
-        ctx.fillRect(36, 14, 8, 8);
+        // === LOINCLOTH ===
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(8, 55, 64, 15);
+        ctx.fillStyle = '#6B3503';
+        // Cloth folds
+        ctx.fillRect(20, 65, 8, 10);
+        ctx.fillRect(36, 65, 8, 10);
+        ctx.fillRect(52, 65, 8, 8);
+        
+        // === MASSIVE TORSO ===
+        ctx.fillStyle = '#7B5433';
+        ctx.fillRect(5, 25, 70, 35);
+        
+        // Chest muscles
+        ctx.fillStyle = '#8B6443';
+        ctx.fillRect(12, 30, 25, 15);
+        ctx.fillRect(42, 30, 25, 15);
+        
+        // Belly
+        ctx.fillStyle = '#6B4423';
+        ctx.fillRect(20, 45, 40, 15);
+        
+        // Chest hair (dark patches)
+        ctx.fillStyle = '#3a2010';
+        ctx.fillRect(30, 35, 20, 8);
+        
+        // === MASSIVE ARMS ===
+        ctx.fillStyle = '#7B5433';
+        // Left arm
+        ctx.fillRect(-10, 28, 20, 14);
+        ctx.fillRect(-15, 40, 18, 30);
+        // Right arm (club arm) - animated
+        ctx.fillRect(70, 28 - attack, 20, 14);
+        ctx.fillRect(72 + attack, 40 - attack * 2, 18, 30);
+        
+        // Fists
+        ctx.fillStyle = '#6B4423';
+        ctx.fillRect(-18, 68, 22, 16);
+        ctx.fillRect(70 + attack, 68 - attack * 2, 22, 16);
+        
+        // === HEAD ===
+        ctx.fillStyle = '#8B6443';
+        ctx.fillRect(15, -5, 50, 35);
+        
+        // Face features
+        ctx.fillStyle = '#6B4423';
+        // Brow ridge
+        ctx.fillRect(18, 2, 44, 8);
+        
+        // === THE SINGLE EYE ===
+        // Eye socket
+        ctx.fillStyle = '#1a0a0a';
+        ctx.beginPath();
+        ctx.arc(40, 14, 14, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Eyeball
+        ctx.fillStyle = '#FFFFCC';
+        ctx.beginPath();
+        ctx.arc(40, 14, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Iris
+        ctx.fillStyle = '#AA0000';
+        ctx.beginPath();
+        ctx.arc(40, 14, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Pupil
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(40, 14, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Eye shine
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(36, 10, 3, 3);
+        
+        // Angry eyebrow
+        ctx.fillStyle = '#3a2010';
+        ctx.fillRect(25, -2, 30, 6);
+        
+        // Nose
+        ctx.fillStyle = '#7B5433';
+        ctx.fillRect(35, 22, 10, 8);
+        ctx.fillStyle = '#5B3413';
+        ctx.fillRect(37, 28, 3, 2);
+        ctx.fillRect(40, 28, 3, 2);
+        
+        // Mouth (angry grimace)
+        ctx.fillStyle = '#2a0a0a';
+        ctx.fillRect(28, 32, 24, 6);
+        // Teeth/tusks
+        ctx.fillStyle = '#F0F0D0';
+        ctx.fillRect(30, 32, 4, 5);
+        ctx.fillRect(36, 32, 3, 4);
+        ctx.fillRect(41, 32, 3, 4);
+        ctx.fillRect(46, 32, 4, 5);
+        
+        // === CLUB WEAPON ===
+        ctx.fillStyle = '#4a3020';
+        // Handle
+        ctx.fillRect(88 + attack * 2, 50 - attack * 2, 12, 40);
+        // Club head
+        ctx.fillStyle = '#5a4030';
+        ctx.fillRect(82 + attack * 2, 30 - attack * 2, 24, 25);
+        // Spikes on club
+        ctx.fillStyle = '#808080';
+        ctx.fillRect(80 + attack * 2, 35 - attack * 2, 6, 6);
+        ctx.fillRect(100 + attack * 2, 35 - attack * 2, 6, 6);
+        ctx.fillRect(90 + attack * 2, 28 - attack * 2, 6, 6);
+        ctx.fillRect(90 + attack * 2, 50 - attack * 2, 6, 6);
+        
+        // === RAGE EFFECT when low health ===
+        if (this.health < this.maxHealth * 0.3) {
+            ctx.fillStyle = 'rgba(255, 0, 0, ' + (0.2 + Math.sin(Date.now() / 100) * 0.1) + ')';
+            ctx.fillRect(0, -10, 80, 110);
+        }
     }
     
     drawBossHealthBar(ctx, cameraX) {
