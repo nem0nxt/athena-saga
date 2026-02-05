@@ -1,6 +1,6 @@
 extends CharacterBody3D
 
-const QuickCharacter = preload("res://scripts/quick_character.gd")
+const SimpleCharacter = preload("res://scripts/simple_character.gd")
 
 # Movement
 const SPEED = 7.0
@@ -136,6 +136,6 @@ func setup_character_model() -> void:
 	if default_body:
 		default_body.visible = false
 	
-	# Add our stylized Athena character
-	var athena = QuickCharacter.create_athena_placeholder()
+	# Add our simple Athena character
+	var athena = SimpleCharacter.create_simple_athena()
 	$MeshPivot.add_child(athena)
