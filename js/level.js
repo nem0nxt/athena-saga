@@ -111,156 +111,118 @@ class LevelRenderer {
         const ctx = this.ctx;
         const cameraX = this.camera.x;
         
-        // RASTAN SAGA STYLE: Epic sunset gradient sky
+        // RASTAN SAGA AUTHENTIC BACKGROUND (1987 Arcade)
+        // Dark purple/blue gradient sky - exact Rastan palette
         const gradient = ctx.createLinearGradient(0, 0, 0, 480);
-        
-        // Sunset colors based on level progress
-        const progress = cameraX / LEVEL_DATA.width;
-        if (progress < 0.3) {
-            // Dawn/morning
-            gradient.addColorStop(0, '#1a0a30');
-            gradient.addColorStop(0.3, '#4a2060');
-            gradient.addColorStop(0.5, '#8a4080');
-            gradient.addColorStop(0.7, '#cc6040');
-            gradient.addColorStop(1, '#ffaa60');
-        } else if (progress < 0.7) {
-            // Golden hour
-            gradient.addColorStop(0, '#2a1040');
-            gradient.addColorStop(0.3, '#6a3060');
-            gradient.addColorStop(0.5, '#cc6040');
-            gradient.addColorStop(0.7, '#ff8040');
-            gradient.addColorStop(1, '#ffcc80');
-        } else {
-            // Dusk/approaching boss
-            gradient.addColorStop(0, '#0a0520');
-            gradient.addColorStop(0.3, '#2a0a40');
-            gradient.addColorStop(0.5, '#4a1060');
-            gradient.addColorStop(0.7, '#6a2040');
-            gradient.addColorStop(1, '#3a1020');
-        }
+        gradient.addColorStop(0, '#000020');    // Deep dark blue
+        gradient.addColorStop(0.3, '#100830');  // Dark purple
+        gradient.addColorStop(0.5, '#201050');  // Purple
+        gradient.addColorStop(0.7, '#301868');  // Lighter purple
+        gradient.addColorStop(1, '#402070');    // Base purple
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 800, 480);
         
-        // Clouds (Rastan-style)
-        ctx.fillStyle = 'rgba(255, 200, 150, 0.3)';
-        for (let i = 0; i < 8; i++) {
-            const cloudX = (i * 250 - cameraX * 0.15) % 1000 - 100;
-            const cloudY = 40 + (i % 3) * 30;
-            this.drawCloud(cloudX, cloudY, 80 + (i % 4) * 20);
+        // Rastan-style moon (large, pale)
+        ctx.fillStyle = '#E0E0C0';
+        ctx.beginPath();
+        ctx.arc(680 - cameraX * 0.02, 80, 50, 0, Math.PI * 2);
+        ctx.fill();
+        // Moon craters
+        ctx.fillStyle = '#C0C0A0';
+        ctx.beginPath();
+        ctx.arc(670 - cameraX * 0.02, 70, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(695 - cameraX * 0.02, 90, 6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Stars (Rastan style - sparse, simple)
+        ctx.fillStyle = '#FFFFFF';
+        for (let i = 0; i < 30; i++) {
+            const x = (i * 97 + cameraX * 0.03) % 800;
+            const y = (i * 47) % 250;
+            ctx.fillRect(x, y, 2, 2);
         }
         
-        // Sun/Moon based on progress
-        if (progress < 0.5) {
-            // Setting sun
-            const sunX = 650 - cameraX * 0.02;
-            const sunY = 100 + progress * 100;
-            ctx.fillStyle = '#ffcc44';
-            ctx.beginPath();
-            ctx.arc(sunX, sunY, 35, 0, Math.PI * 2);
-            ctx.fill();
-            // Sun glow
-            ctx.fillStyle = 'rgba(255, 200, 100, 0.3)';
-            ctx.beginPath();
-            ctx.arc(sunX, sunY, 60, 0, Math.PI * 2);
-            ctx.fill();
-        } else {
-            // Rising moon
-            ctx.fillStyle = '#fffacd';
-            ctx.beginPath();
-            ctx.arc(650 - cameraX * 0.02, 60, 30, 0, Math.PI * 2);
-            ctx.fill();
+        // Distant ruins/castle silhouette (Rastan style)
+        ctx.fillStyle = '#100820';
+        for (let i = 0; i < 5; i++) {
+            const x = i * 400 - (cameraX * 0.05) % 400 - 100;
+            this.drawRastanCastle(x, 180, 0.8);
         }
         
-        // Stars (appear as level progresses)
-        if (progress > 0.4) {
-            ctx.fillStyle = '#ffffff';
-            const starAlpha = Math.min(1, (progress - 0.4) * 2);
-            for (let i = 0; i < 50; i++) {
-                const x = (i * 73 + cameraX * 0.05) % 800;
-                const y = (i * 37) % 200;
-                const size = (i % 3) + 1;
-                ctx.globalAlpha = starAlpha * (0.3 + (Math.sin(Date.now() / 1000 + i) + 1) * 0.3);
-                ctx.fillRect(x, y, size, size);
-            }
-            ctx.globalAlpha = 1;
+        // Mountain range (Rastan dark purple)
+        ctx.fillStyle = '#180C30';
+        for (let i = 0; i < 12; i++) {
+            const x = i * 180 - (cameraX * 0.1) % 180 - 50;
+            this.drawMountain(x, 300, 200, 180);
         }
         
-        // Distant Greek temple silhouette (Rastan style)
-        ctx.fillStyle = '#1a0a20';
-        this.drawTemplesilhouette(400 - cameraX * 0.08, 180, 0.6);
-        this.drawTemplesilhouette(700 - cameraX * 0.08, 200, 0.4);
+        // Closer rocky hills
+        ctx.fillStyle = '#201440';
+        for (let i = 0; i < 16; i++) {
+            const x = i * 130 - (cameraX * 0.2) % 130 - 30;
+            this.drawMountain(x, 350, 150, 120);
+        }
         
-        // Distant mountains (layered parallax)
-        ctx.fillStyle = '#2a1040';
+        // Dead trees silhouettes (Rastan style)
+        ctx.fillStyle = '#180C28';
         for (let i = 0; i < 10; i++) {
-            const x = i * 200 - (cameraX * 0.1) % 200;
-            this.drawMountain(x, 280, 180, 180);
+            const treeX = i * 250 - (cameraX * 0.25) % 250;
+            this.drawDeadTree(treeX, 360);
         }
         
-        // Mid-ground hills with trees
-        ctx.fillStyle = '#3a1850';
-        for (let i = 0; i < 15; i++) {
-            const x = i * 150 - (cameraX * 0.25) % 150;
-            this.drawMountain(x, 340, 120, 100);
-        }
-        
-        // Olive trees silhouettes
-        ctx.fillStyle = '#2a1838';
+        // Ground shadow layer
+        ctx.fillStyle = '#281850';
         for (let i = 0; i < 20; i++) {
-            const treeX = i * 180 - (cameraX * 0.35) % 180;
-            this.drawOliveTree(treeX, 350, 0.5 + (i % 3) * 0.2);
+            const x = i * 100 - (cameraX * 0.35) % 100 - 20;
+            this.drawMountain(x, 400, 100, 60);
         }
+    }
+    
+    drawRastanCastle(x, y, scale) {
+        const ctx = this.ctx;
+        const w = 200 * scale;
         
-        // Near hills
-        ctx.fillStyle = '#3a2050';
-        for (let i = 0; i < 20; i++) {
-            const x = i * 100 - (cameraX * 0.4) % 100;
-            this.drawMountain(x, 380, 80, 50);
+        // Main tower
+        ctx.fillRect(x + w * 0.3, y - 80 * scale, 40 * scale, 120 * scale);
+        // Side towers
+        ctx.fillRect(x, y - 40 * scale, 30 * scale, 80 * scale);
+        ctx.fillRect(x + w * 0.7, y - 50 * scale, 35 * scale, 90 * scale);
+        // Battlements
+        for (let i = 0; i < 4; i++) {
+            ctx.fillRect(x + w * 0.3 + i * 12 * scale, y - 90 * scale, 8 * scale, 12 * scale);
         }
+        // Wall
+        ctx.fillRect(x + 25 * scale, y, w * 0.5, 40 * scale);
+        // Ruined sections (gaps)
+        ctx.clearRect(x + w * 0.4, y - 20 * scale, 20 * scale, 30 * scale);
+    }
+    
+    drawDeadTree(x, y) {
+        const ctx = this.ctx;
+        // Trunk
+        ctx.fillRect(x, y - 60, 8, 60);
+        // Branches (bare, twisted)
+        ctx.fillRect(x - 20, y - 50, 25, 4);
+        ctx.fillRect(x + 5, y - 55, 30, 4);
+        ctx.fillRect(x - 15, y - 40, 20, 3);
+        ctx.fillRect(x + 8, y - 35, 18, 3);
+        // Smaller twigs
+        ctx.fillRect(x - 25, y - 52, 8, 2);
+        ctx.fillRect(x + 30, y - 57, 10, 2);
     }
     
     drawCloud(x, y, width) {
-        const ctx = this.ctx;
-        ctx.beginPath();
-        ctx.arc(x, y, width * 0.3, 0, Math.PI * 2);
-        ctx.arc(x + width * 0.3, y - 10, width * 0.25, 0, Math.PI * 2);
-        ctx.arc(x + width * 0.6, y, width * 0.35, 0, Math.PI * 2);
-        ctx.arc(x + width * 0.4, y + 5, width * 0.2, 0, Math.PI * 2);
-        ctx.fill();
+        // Not used in Rastan style
     }
     
     drawTemplesilhouette(x, y, scale) {
-        const ctx = this.ctx;
-        const w = 120 * scale;
-        const h = 80 * scale;
-        
-        // Temple base
-        ctx.fillRect(x, y + h * 0.6, w, h * 0.4);
-        
-        // Columns
-        for (let i = 0; i < 5; i++) {
-            ctx.fillRect(x + 8 * scale + i * 24 * scale, y + h * 0.3, 8 * scale, h * 0.5);
-        }
-        
-        // Roof (triangle)
-        ctx.beginPath();
-        ctx.moveTo(x - 10 * scale, y + h * 0.3);
-        ctx.lineTo(x + w / 2, y);
-        ctx.lineTo(x + w + 10 * scale, y + h * 0.3);
-        ctx.closePath();
-        ctx.fill();
+        // Not used in Rastan style  
     }
     
     drawOliveTree(x, y, scale) {
-        const ctx = this.ctx;
-        // Trunk
-        ctx.fillRect(x, y, 6 * scale, 30 * scale);
-        // Foliage (multiple circles)
-        ctx.beginPath();
-        ctx.arc(x + 3 * scale, y - 10 * scale, 20 * scale, 0, Math.PI * 2);
-        ctx.arc(x - 10 * scale, y, 15 * scale, 0, Math.PI * 2);
-        ctx.arc(x + 16 * scale, y, 15 * scale, 0, Math.PI * 2);
-        ctx.fill();
+        // Not used in Rastan style
     }
     
     drawMountain(x, baseY, width, height) {

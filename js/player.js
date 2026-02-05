@@ -461,220 +461,208 @@ class Player {
     }
     
     drawAthenaFallback(ctx) {
-        // GOLDEN AXE STYLE - Amazon warrior goddess (blonde Tyris Flare style)
-        const bounce = this.state === 'run' ? Math.sin(this.animFrame * Math.PI / 2) * 3 : 0;
-        const attackOffset = this.state === 'attack' ? this.spriteFrame * 4 : 0;
-        const breathe = Math.sin(Date.now() / 400) * 1;
+        // RASTAN SAGA AUTHENTIC STYLE (1987 Arcade)
+        // Female warrior version - same palette and style as original Rastan
+        const bounce = this.state === 'run' ? Math.sin(this.animFrame * Math.PI / 2) * 2 : 0;
+        const runFrame = this.state === 'run' ? this.animFrame % 4 : 0;
+        const attackFrame = this.state === 'attack' ? this.spriteFrame : 0;
         
-        // === BLONDE FLOWING HAIR ===
-        ctx.fillStyle = '#FFD700'; // Golden blonde
-        // Hair back (flowing behind)
-        ctx.fillRect(6, -4 - bounce, 36, 28);
-        // Hair flowing down back
-        ctx.fillRect(4, 20 - bounce, 12, 30 + Math.sin(Date.now() / 200) * 3);
-        ctx.fillRect(32, 20 - bounce, 10, 25 + Math.sin(Date.now() / 180) * 3);
-        // Hair highlights
-        ctx.fillStyle = '#FFEC8B';
-        ctx.fillRect(10, 0 - bounce, 6, 20);
-        ctx.fillRect(28, 2 - bounce, 6, 18);
+        // Rastan authentic color palette
+        const SKIN = '#D4A574';      // Rastan skin tone
+        const SKIN_SHADOW = '#B8956A';
+        const SKIN_DARK = '#8B6914';
+        const HAIR = '#4A3728';       // Dark brown hair
+        const HAIR_LIGHT = '#6B5344';
+        const LOINCLOTH = '#1E90FF';  // Blue loincloth like Rastan
+        const LOINCLOTH_DARK = '#0066CC';
+        const METAL = '#C0C0C0';
+        const METAL_SHINE = '#FFFFFF';
+        const METAL_DARK = '#808080';
+        const LEATHER = '#8B4513';
+        const LEATHER_DARK = '#5D2E0C';
         
-        // === LEGS (toned warrior legs) ===
-        ctx.fillStyle = '#F4C7A0'; // Skin tone
+        // === LEGS (Rastan muscular style) ===
         // Left leg
-        ctx.fillRect(10, 44 - bounce, 10, 20);
-        // Right leg  
-        ctx.fillRect(26, 42 - bounce, 10, 22);
+        ctx.fillStyle = SKIN;
+        ctx.fillRect(12, 46 - bounce, 8, 18);
+        ctx.fillStyle = SKIN_SHADOW;
+        ctx.fillRect(12, 50 - bounce, 3, 12);
         
-        // Leg definition/muscles
-        ctx.fillStyle = '#E0B090';
-        ctx.fillRect(12, 48 - bounce, 3, 12);
-        ctx.fillRect(28, 46 - bounce, 3, 14);
+        // Right leg
+        ctx.fillStyle = SKIN;
+        ctx.fillRect(26, 46 - bounce, 8, 18);
+        ctx.fillStyle = SKIN_SHADOW;
+        ctx.fillRect(26, 50 - bounce, 3, 12);
         
-        // Boots (warrior sandals)
-        ctx.fillStyle = '#8B4513';
-        ctx.fillRect(8, 62 - bounce, 14, 6);
-        ctx.fillRect(24, 62 - bounce, 14, 6);
-        // Boot straps
-        ctx.fillStyle = '#A0522D';
-        ctx.fillRect(10, 54 - bounce, 10, 2);
-        ctx.fillRect(10, 58 - bounce, 10, 2);
-        ctx.fillRect(26, 52 - bounce, 10, 2);
-        ctx.fillRect(26, 56 - bounce, 10, 2);
+        // Boots (Rastan style - brown leather)
+        ctx.fillStyle = LEATHER;
+        ctx.fillRect(10, 60 - bounce, 12, 8);
+        ctx.fillRect(24, 60 - bounce, 12, 8);
+        ctx.fillStyle = LEATHER_DARK;
+        ctx.fillRect(10, 64 - bounce, 12, 4);
+        ctx.fillRect(24, 64 - bounce, 12, 4);
         
-        // === BIKINI BOTTOM (golden) ===
-        ctx.fillStyle = '#DAA520';
-        ctx.fillRect(10, 38 - bounce, 26, 10);
-        ctx.fillStyle = '#FFD700';
-        ctx.fillRect(12, 40 - bounce, 22, 6);
-        // Belt decoration
-        ctx.fillStyle = '#B8860B';
-        ctx.fillRect(20, 38 - bounce, 8, 3);
+        // === BLUE LOINCLOTH (Rastan signature) ===
+        ctx.fillStyle = LOINCLOTH;
+        ctx.fillRect(10, 40 - bounce, 26, 10);
+        // Front flap
+        ctx.fillRect(16, 48 - bounce, 14, 8);
+        ctx.fillStyle = LOINCLOTH_DARK;
+        ctx.fillRect(18, 50 - bounce, 10, 5);
+        // Belt
+        ctx.fillStyle = LEATHER;
+        ctx.fillRect(10, 38 - bounce, 26, 4);
+        ctx.fillStyle = METAL;
+        ctx.fillRect(20, 38 - bounce, 6, 4); // Buckle
         
-        // === TONED MIDRIFF ===
-        ctx.fillStyle = '#F4C7A0';
-        ctx.fillRect(12, 26 - bounce + breathe, 22, 14);
-        // Abs definition
-        ctx.fillStyle = '#E0B090';
-        ctx.fillRect(18, 28 - bounce + breathe, 2, 10);
-        ctx.fillRect(24, 28 - bounce + breathe, 2, 10);
-        ctx.fillRect(14, 32 - bounce + breathe, 18, 1);
-        ctx.fillRect(14, 36 - bounce + breathe, 18, 1);
+        // === TORSO (muscular Rastan style) ===
+        ctx.fillStyle = SKIN;
+        ctx.fillRect(12, 20 - bounce, 22, 20);
+        // Muscle definition
+        ctx.fillStyle = SKIN_SHADOW;
+        ctx.fillRect(16, 24 - bounce, 2, 12);
+        ctx.fillRect(28, 24 - bounce, 2, 12);
+        // Chest (feminine but muscular)
+        ctx.fillStyle = SKIN;
+        ctx.fillRect(14, 22 - bounce, 8, 6);
+        ctx.fillRect(24, 22 - bounce, 8, 6);
         
-        // === BIKINI TOP (golden) ===
-        ctx.fillStyle = '#DAA520';
-        ctx.fillRect(10, 18 - bounce + breathe, 26, 10);
-        ctx.fillStyle = '#FFD700';
-        // Left cup
-        ctx.fillRect(12, 20 - bounce + breathe, 10, 7);
-        // Right cup
-        ctx.fillRect(24, 20 - bounce + breathe, 10, 7);
-        // Strap
-        ctx.fillStyle = '#B8860B';
-        ctx.fillRect(22, 18 - bounce + breathe, 2, 10);
+        // Bikini top (blue to match loincloth - Rastan palette)
+        ctx.fillStyle = LOINCLOTH;
+        ctx.fillRect(14, 22 - bounce, 8, 5);
+        ctx.fillRect(24, 22 - bounce, 8, 5);
+        ctx.fillStyle = LOINCLOTH_DARK;
+        ctx.fillRect(16, 23 - bounce, 4, 3);
+        ctx.fillRect(26, 23 - bounce, 4, 3);
         
-        // === ARMS ===
-        ctx.fillStyle = '#F4C7A0';
-        // Left arm (shield arm)
-        ctx.fillRect(2, 18 - bounce, 10, 6);
-        ctx.fillRect(0, 24 - bounce, 10, 20);
-        // Right arm (weapon arm)
+        // === ARMS (Rastan muscular) ===
+        ctx.fillStyle = SKIN;
+        // Left arm
+        ctx.fillRect(4, 20 - bounce, 8, 6);
+        ctx.fillRect(2, 26 - bounce, 8, 18);
+        ctx.fillStyle = SKIN_SHADOW;
+        ctx.fillRect(4, 28 - bounce, 3, 14);
+        
+        // Right arm (sword arm)
+        ctx.fillStyle = SKIN;
         if (this.state === 'attack') {
-            ctx.fillRect(34 + attackOffset, 16 - bounce, 12, 6);
-            ctx.fillRect(40 + attackOffset, 20 - bounce, 10, 20);
+            // Arm extended for attack
+            ctx.fillRect(34, 18 - bounce - attackFrame * 2, 8, 6);
+            ctx.fillRect(36, 10 - bounce - attackFrame * 4, 8, 14);
         } else {
-            ctx.fillRect(34, 18 - bounce, 10, 6);
-            ctx.fillRect(36, 24 - bounce, 10, 20);
+            ctx.fillRect(34, 20 - bounce, 8, 6);
+            ctx.fillRect(36, 26 - bounce, 8, 18);
         }
         
-        // Arm bands (golden)
-        ctx.fillStyle = '#FFD700';
-        ctx.fillRect(0, 24 - bounce, 10, 3);
-        ctx.fillRect(0, 38 - bounce, 10, 3);
+        // Arm bands (Rastan style metal)
+        ctx.fillStyle = METAL;
+        ctx.fillRect(2, 26 - bounce, 8, 3);
+        ctx.fillRect(2, 40 - bounce, 8, 3);
         if (this.state === 'attack') {
-            ctx.fillRect(40 + attackOffset, 20 - bounce, 10, 3);
-            ctx.fillRect(40 + attackOffset, 34 - bounce, 10, 3);
+            ctx.fillRect(36, 10 - bounce - attackFrame * 4, 8, 3);
         } else {
-            ctx.fillRect(36, 24 - bounce, 10, 3);
-            ctx.fillRect(36, 38 - bounce, 10, 3);
+            ctx.fillRect(36, 26 - bounce, 8, 3);
+            ctx.fillRect(36, 40 - bounce, 8, 3);
         }
         
-        // === FACE ===
-        ctx.fillStyle = '#F4C7A0';
-        ctx.fillRect(14, 2 - bounce, 18, 18);
+        // === HEAD ===
+        ctx.fillStyle = SKIN;
+        ctx.fillRect(14, 4 - bounce, 18, 16);
         
-        // Eyes (blue warrior eyes)
-        ctx.fillStyle = '#4169E1';
-        ctx.fillRect(16, 8 - bounce, 5, 4);
-        ctx.fillRect(25, 8 - bounce, 5, 4);
-        // Pupils
-        ctx.fillStyle = '#000080';
-        ctx.fillRect(18, 9 - bounce, 2, 2);
-        ctx.fillRect(27, 9 - bounce, 2, 2);
-        // Eye whites
+        // Eyes (Rastan style - simple)
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(17, 10 - bounce, 3, 3);
+        ctx.fillRect(26, 10 - bounce, 3, 3);
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(16, 8 - bounce, 2, 2);
-        ctx.fillRect(25, 8 - bounce, 2, 2);
+        ctx.fillRect(17, 10 - bounce, 1, 1);
+        ctx.fillRect(26, 10 - bounce, 1, 1);
         
-        // Eyebrows (determined look)
-        ctx.fillStyle = '#DAA520';
-        ctx.fillRect(15, 6 - bounce, 6, 2);
-        ctx.fillRect(25, 6 - bounce, 6, 2);
+        // Nose & mouth (minimal like Rastan)
+        ctx.fillStyle = SKIN_SHADOW;
+        ctx.fillRect(22, 12 - bounce, 2, 4);
+        ctx.fillStyle = SKIN_DARK;
+        ctx.fillRect(20, 16 - bounce, 6, 2);
         
-        // Nose
-        ctx.fillStyle = '#E8B090';
-        ctx.fillRect(21, 10 - bounce, 4, 5);
+        // === HAIR (Long flowing - Rastan style brown) ===
+        ctx.fillStyle = HAIR;
+        // Top hair
+        ctx.fillRect(12, 0 - bounce, 22, 8);
+        // Side hair
+        ctx.fillRect(10, 4 - bounce, 6, 16);
+        ctx.fillRect(30, 4 - bounce, 6, 16);
+        // Back hair (long flowing)
+        ctx.fillRect(8, 18 - bounce, 8, 28 + Math.sin(Date.now() / 200) * 2);
+        ctx.fillRect(32, 18 - bounce, 6, 24 + Math.sin(Date.now() / 180) * 2);
+        // Hair highlights
+        ctx.fillStyle = HAIR_LIGHT;
+        ctx.fillRect(14, 2 - bounce, 4, 4);
+        ctx.fillRect(26, 2 - bounce, 4, 4);
+        ctx.fillRect(10, 20 - bounce, 3, 10);
         
-        // Lips (red)
-        ctx.fillStyle = '#CC6666';
-        ctx.fillRect(19, 16 - bounce, 8, 2);
+        // Headband (Rastan style)
+        ctx.fillStyle = LOINCLOTH;
+        ctx.fillRect(10, 6 - bounce, 26, 3);
         
-        // === TIARA/HEADBAND (golden with gem) ===
-        ctx.fillStyle = '#FFD700';
-        ctx.fillRect(12, 0 - bounce, 22, 4);
-        ctx.fillStyle = '#B8860B';
-        ctx.fillRect(14, 1 - bounce, 18, 2);
-        // Center gem (blue sapphire - Athena's wisdom)
-        ctx.fillStyle = '#4169E1';
-        ctx.fillRect(20, 0 - bounce, 6, 4);
-        ctx.fillStyle = '#87CEEB';
-        ctx.fillRect(21, 1 - bounce, 2, 2);
-        
-        // === SHIELD (round Greek aspis with owl) ===
-        if (this.blocking) {
-            // Shield raised in front
-            ctx.fillStyle = '#CD7F32';
-            ctx.beginPath();
-            ctx.arc(-6, 30 - bounce, 20, 0, Math.PI * 2);
-            ctx.fill();
-            // Shield inner
-            ctx.fillStyle = '#8B4513';
-            ctx.beginPath();
-            ctx.arc(-6, 30 - bounce, 16, 0, Math.PI * 2);
-            ctx.fill();
-            // Owl emblem
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.arc(-6, 30 - bounce, 8, 0, Math.PI * 2);
-            ctx.fill();
-            // Owl eyes
-            ctx.fillStyle = '#000';
-            ctx.fillRect(-10, 28 - bounce, 3, 3);
-            ctx.fillRect(-2, 28 - bounce, 3, 3);
-        } else {
-            // Shield at side
-            ctx.fillStyle = '#CD7F32';
-            ctx.beginPath();
-            ctx.arc(-4, 34 - bounce, 16, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#8B4513';
-            ctx.beginPath();
-            ctx.arc(-4, 34 - bounce, 12, 0, Math.PI * 2);
-            ctx.fill();
-            // Owl emblem (simplified)
-            ctx.fillStyle = '#FFD700';
-            ctx.fillRect(-8, 30 - bounce, 8, 8);
-        }
-        
-        // === SPEAR (Greek dory) ===
-        ctx.fillStyle = '#8B4513'; // Wood shaft
+        // === SWORD (Rastan's signature large sword) ===
         if (this.state === 'attack') {
-            // Thrusting spear
-            ctx.fillRect(48, 22 - bounce, 44 + attackOffset * 3, 4);
-            // Spear tip (leaf-shaped)
-            ctx.fillStyle = '#C0C0C0';
-            ctx.beginPath();
-            ctx.moveTo(92 + attackOffset * 3, 18 - bounce);
-            ctx.lineTo(104 + attackOffset * 3, 24 - bounce);
-            ctx.lineTo(92 + attackOffset * 3, 30 - bounce);
-            ctx.closePath();
-            ctx.fill();
-            // Tip shine
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(94 + attackOffset * 3, 22 - bounce, 4, 2);
+            // Sword swinging down
+            const swingAngle = attackFrame * 20;
+            ctx.fillStyle = METAL;
+            // Blade (large Rastan sword)
+            ctx.fillRect(40, -20 - bounce + attackFrame * 8, 6, 40);
+            ctx.fillStyle = METAL_SHINE;
+            ctx.fillRect(41, -18 - bounce + attackFrame * 8, 2, 36);
+            ctx.fillStyle = METAL_DARK;
+            ctx.fillRect(44, -16 - bounce + attackFrame * 8, 2, 32);
+            // Hilt
+            ctx.fillStyle = LEATHER;
+            ctx.fillRect(38, 18 - bounce + attackFrame * 8, 10, 6);
+            ctx.fillStyle = METAL;
+            ctx.fillRect(36, 16 - bounce + attackFrame * 8, 14, 3);
         } else {
-            // Spear held upright
-            ctx.fillRect(44, -30 - bounce, 4, 74);
-            // Spear tip (leaf-shaped)
-            ctx.fillStyle = '#C0C0C0';
-            ctx.beginPath();
-            ctx.moveTo(40, -30 - bounce);
-            ctx.lineTo(46, -46 - bounce);
-            ctx.lineTo(52, -30 - bounce);
-            ctx.closePath();
-            ctx.fill();
-            // Spear butt
-            ctx.fillStyle = '#B8860B';
-            ctx.fillRect(43, 40 - bounce, 6, 6);
+            // Sword at rest (over shoulder - Rastan pose)
+            ctx.fillStyle = METAL;
+            ctx.fillRect(38, -30 - bounce, 6, 44);
+            ctx.fillStyle = METAL_SHINE;
+            ctx.fillRect(39, -28 - bounce, 2, 40);
+            ctx.fillStyle = METAL_DARK;
+            ctx.fillRect(42, -26 - bounce, 2, 36);
+            // Hilt
+            ctx.fillStyle = LEATHER;
+            ctx.fillRect(36, 12 - bounce, 10, 6);
+            ctx.fillStyle = METAL;
+            ctx.fillRect(34, 10 - bounce, 14, 3);
             
-            // Weapon level glow
+            // Weapon glow for upgrades
             if (this.weaponLevel >= 2) {
-                ctx.fillStyle = this.weaponLevel >= 3 ? '#FF6600' : '#FFD700';
-                ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 100) * 0.3;
-                ctx.beginPath();
-                ctx.arc(46, -38 - bounce, 10, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.fillStyle = this.weaponLevel >= 3 ? '#FF4400' : '#FFAA00';
+                ctx.globalAlpha = 0.4 + Math.sin(Date.now() / 100) * 0.2;
+                ctx.fillRect(36, -32 - bounce, 10, 48);
                 ctx.globalAlpha = 1;
             }
+        }
+        
+        // === SHIELD (on back when not blocking) ===
+        if (this.blocking) {
+            // Shield in front
+            ctx.fillStyle = METAL;
+            ctx.beginPath();
+            ctx.arc(0, 32 - bounce, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = METAL_DARK;
+            ctx.beginPath();
+            ctx.arc(0, 32 - bounce, 14, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = LOINCLOTH;
+            ctx.beginPath();
+            ctx.arc(0, 32 - bounce, 8, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // Small round shield visible on arm
+            ctx.fillStyle = METAL_DARK;
+            ctx.beginPath();
+            ctx.arc(0, 34 - bounce, 10, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
     
