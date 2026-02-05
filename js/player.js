@@ -423,38 +423,14 @@ class Player {
         
         ctx.save();
         
-        // Get sprite from sprite manager
-        const sprites = window.spriteManager && window.spriteManager.sprites.athena;
-        
-        if (sprites && sprites[this.state]) {
-            const frames = sprites[this.state];
-            const frame = frames[this.spriteFrame % frames.length];
-            
-            if (frame) {
-                // Calculate position for centered sprite
-                const spriteWidth = frame.width;
-                const spriteHeight = frame.height;
-                const offsetX = (spriteWidth - this.width) / 2;
-                const offsetY = spriteHeight - this.height - 8;
-                
-                if (this.facing === -1) {
-                    ctx.translate(screenX + this.width / 2, screenY - offsetY);
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(frame, -spriteWidth / 2, 0);
-                } else {
-                    ctx.drawImage(frame, screenX - offsetX, screenY - offsetY);
-                }
-            }
+        // ALWAYS use hand-drawn Rastan style (no sprite sheets)
+        if (this.facing === -1) {
+            ctx.translate(screenX + this.width, screenY);
+            ctx.scale(-1, 1);
         } else {
-            // Fallback to old drawing method
-            if (this.facing === -1) {
-                ctx.translate(screenX + this.width, screenY);
-                ctx.scale(-1, 1);
-            } else {
-                ctx.translate(screenX, screenY);
-            }
-            this.drawAthenaFallback(ctx);
+            ctx.translate(screenX, screenY);
         }
+        this.drawAthenaFallback(ctx);
         
         ctx.restore();
         ctx.globalAlpha = 1;
