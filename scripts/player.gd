@@ -1,5 +1,7 @@
 extends CharacterBody3D
 
+const QuickCharacter = preload("res://scripts/quick_character.gd")
+
 # Movement
 const SPEED = 7.0
 const JUMP_VELOCITY = 5.5
@@ -24,6 +26,7 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	setup_character_model()
 
 func _input(event: InputEvent) -> void:
 	# Camera rotation with mouse
@@ -126,3 +129,13 @@ func play_animation(anim_name: String) -> void:
 	if animation_player and animation_player.has_animation(anim_name):
 		if animation_player.current_animation != anim_name:
 			animation_player.play(anim_name)
+
+func setup_character_model() -> void:
+	# Hide the default capsule
+	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
+	if default_body:
+		default_body.visible = false
+	
+	# Add our stylized Athena character
+	var athena = QuickCharacter.create_athena_placeholder()
+	$MeshPivot.add_child(athena)
