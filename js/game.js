@@ -335,8 +335,8 @@ class Game {
         const healthPercent = this.player.health / this.player.maxHealth;
         
         if (healthPercent <= 0.25) {
-            // Critical! Very fast heartbeat
-            this.heartbeatSpeed = 250;
+            // Critical! Very fast heartbeat - 250 BPM
+            this.heartbeatSpeed = 240;
         } else if (healthPercent <= 0.5) {
             // Low health - fast heartbeat
             this.heartbeatSpeed = 400;

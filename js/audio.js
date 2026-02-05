@@ -462,7 +462,7 @@ class AudioManager {
         // Calculate BPM based on health (lower health = faster heartbeat)
         let bpm;
         if (healthPercent <= 0.25) {
-            bpm = 140; // Critical - very fast
+            bpm = 250; // Critical - extremely fast (250 BPM!)
         } else if (healthPercent <= 0.5) {
             bpm = 100; // Low health - fast
         } else if (healthPercent <= 0.75) {
