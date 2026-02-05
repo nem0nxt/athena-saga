@@ -1172,102 +1172,190 @@ class SpriteManager {
     }
     
     // ==========================================
-    // HEART SPRITES (for health indicator)
+    // ANATOMICAL HEART SPRITES (Rastan Saga style)
+    // Single realistic heart that beats - 16-bit pixel art
     // ==========================================
     createHeartSprites() {
         const frames = [];
-        // 8 frames for smooth heartbeat animation
+        // 8 frames for smooth heartbeat animation (systole/diastole)
         for (let i = 0; i < 8; i++) {
-            frames.push(this.createHeartFrame(i));
+            frames.push(this.createAnatomicalHeartFrame(i));
         }
         this.sprites.heart = frames;
     }
     
-    createHeartFrame(frame) {
+    createAnatomicalHeartFrame(frame) {
         const canvas = document.createElement('canvas');
-        canvas.width = 32;
-        canvas.height = 32;
+        canvas.width = 48;
+        canvas.height = 48;
         const ctx = canvas.getContext('2d');
         ctx.imageSmoothingEnabled = false;
         
-        // Calculate scale for heartbeat (systole/diastole)
-        // Frames 0-2: expand (systole), 3-7: contract (diastole)
+        // Heartbeat scale animation (like Rastan Saga)
+        // Frames 0-2: systole (quick contraction/pump)
+        // Frames 3-7: diastole (slow relaxation)
         let scale = 1;
         if (frame < 3) {
-            scale = 1 + frame * 0.05;
+            // Systole - quick pump, scale up
+            scale = 1 + (frame + 1) * 0.04;
         } else {
-            scale = 1.1 - (frame - 2) * 0.02;
+            // Diastole - slow return
+            scale = 1.12 - (frame - 2) * 0.024;
         }
         
         ctx.save();
-        ctx.translate(16, 16);
+        ctx.translate(24, 26);
         ctx.scale(scale, scale);
         
+        // Rastan Saga style color palette - realistic anatomical heart
         const colors = {
-            outline: '#880000',
-            main: '#CC2222',
-            light: '#FF4444',
-            highlight: '#FF8888',
-            shine: '#FFAAAA'
+            darkest: '#4A0A0A',      // Deep shadow
+            dark: '#6B1515',         // Dark red flesh
+            mid: '#8B2020',          // Main flesh color
+            main: '#A52A2A',         // Primary heart color
+            light: '#C44040',        // Lighter flesh
+            highlight: '#D45555',    // Highlights
+            vein: '#3A0808',         // Veins/arteries dark
+            veinLight: '#5A1818',    // Veins lighter
+            aorta: '#7A2525',        // Aorta color
+            aortaLight: '#9A3535',   // Aorta highlight
+            glisten: '#E86868',      // Wet glisten
+            shine: '#FF9090'         // Top shine
         };
         
-        // Draw pixelated heart
-        const heartData = [
-            '  ####  ####  ',
-            ' ########### ',
-            '##############',
-            '##############',
-            '##############',
-            ' ############ ',
-            '  ##########  ',
-            '   ########   ',
-            '    ######    ',
-            '     ####     ',
-            '      ##      '
-        ];
+        // Anatomical heart pixel data (24x28 pixels, scaled 2x)
+        // This represents a realistic human heart with aorta, ventricles, atria
         
-        const lightData = [
-            '              ',
-            '  ##    ##    ',
-            ' ###   ###    ',
-            ' ##    ##     ',
-            '              ',
-            '              ',
-            '              ',
-            '              ',
-            '              ',
-            '              ',
-            '              '
-        ];
+        // Draw the anatomical heart shape
+        // Base/ventricles (bottom pointy part)
+        ctx.fillStyle = colors.dark;
+        this.drawPixelBlock(ctx, [
+            // Left ventricle base
+            [-2, 8, 6, 4],
+            [-1, 12, 4, 2],
+            [0, 14, 2, 2],
+        ]);
         
-        // Main heart
         ctx.fillStyle = colors.main;
-        for (let y = 0; y < heartData.length; y++) {
-            for (let x = 0; x < heartData[y].length; x++) {
-                if (heartData[y][x] === '#') {
-                    ctx.fillRect(x * 2 - 14, y * 2 - 10, 2, 2);
-                }
-            }
-        }
+        this.drawPixelBlock(ctx, [
+            // Main body - left side
+            [-10, -6, 8, 14],
+            [-8, -8, 6, 2],
+            [-6, 8, 8, 4],
+            [-4, 12, 6, 2],
+            [-2, 14, 4, 2],
+            [0, 16, 2, 2],
+        ]);
         
-        // Highlight
+        ctx.fillStyle = colors.mid;
+        this.drawPixelBlock(ctx, [
+            // Main body - right side
+            [2, -6, 8, 12],
+            [4, -8, 4, 2],
+            [0, 6, 8, 4],
+            [2, 10, 4, 2],
+        ]);
+        
+        // Aorta (top pipes)
+        ctx.fillStyle = colors.aorta;
+        this.drawPixelBlock(ctx, [
+            // Left pulmonary artery
+            [-8, -12, 4, 6],
+            [-10, -14, 4, 4],
+            [-12, -16, 4, 4],
+            // Aortic arch
+            [-4, -10, 6, 4],
+            [-2, -14, 8, 6],
+            [4, -12, 4, 4],
+            // Right superior vena cava
+            [6, -10, 4, 4],
+        ]);
+        
+        ctx.fillStyle = colors.aortaLight;
+        this.drawPixelBlock(ctx, [
+            // Aorta highlights
+            [-6, -12, 2, 4],
+            [-2, -12, 4, 4],
+            [4, -10, 2, 2],
+        ]);
+        
+        // Add depth with darker shading
+        ctx.fillStyle = colors.darkest;
+        this.drawPixelBlock(ctx, [
+            // Deep shadows
+            [-10, 0, 2, 8],
+            [-8, 6, 2, 4],
+            [-4, 10, 2, 4],
+            [0, 14, 2, 2],
+        ]);
+        
+        // Veins across the surface
+        ctx.fillStyle = colors.vein;
+        this.drawPixelBlock(ctx, [
+            [-6, -2, 2, 8],
+            [-4, 4, 2, 4],
+            [2, 0, 2, 6],
+            [4, -4, 2, 4],
+            [-2, 2, 6, 2],
+        ]);
+        
+        ctx.fillStyle = colors.veinLight;
+        this.drawPixelBlock(ctx, [
+            [-5, -1, 1, 6],
+            [3, 1, 1, 4],
+        ]);
+        
+        // Highlights (wet, pulsing flesh)
         ctx.fillStyle = colors.light;
-        for (let y = 0; y < lightData.length; y++) {
-            for (let x = 0; x < lightData[y].length; x++) {
-                if (lightData[y][x] === '#') {
-                    ctx.fillRect(x * 2 - 14, y * 2 - 10, 2, 2);
-                }
-            }
-        }
+        this.drawPixelBlock(ctx, [
+            [-8, -4, 4, 4],
+            [-6, 0, 2, 4],
+            [4, -4, 4, 4],
+            [6, 0, 2, 4],
+        ]);
         
-        // Shine
+        ctx.fillStyle = colors.highlight;
+        this.drawPixelBlock(ctx, [
+            [-7, -3, 2, 2],
+            [5, -3, 2, 2],
+        ]);
+        
+        // Glisten effect (wet surface)
+        ctx.fillStyle = colors.glisten;
+        this.drawPixelBlock(ctx, [
+            [-6, -6, 2, 2],
+            [2, -6, 2, 2],
+        ]);
+        
         ctx.fillStyle = colors.shine;
-        ctx.fillRect(-10, -6, 4, 4);
-        ctx.fillRect(-6, -8, 2, 2);
+        this.drawPixelBlock(ctx, [
+            [-5, -5, 1, 1],
+            [3, -5, 1, 1],
+        ]);
+        
+        // Atria bumps (top chambers)
+        ctx.fillStyle = colors.main;
+        this.drawPixelBlock(ctx, [
+            [-12, -8, 4, 4],
+            [8, -6, 4, 4],
+        ]);
+        
+        ctx.fillStyle = colors.light;
+        this.drawPixelBlock(ctx, [
+            [-11, -7, 2, 2],
+            [9, -5, 2, 2],
+        ]);
         
         ctx.restore();
         
         return canvas;
+    }
+    
+    // Helper to draw multiple pixel rectangles
+    drawPixelBlock(ctx, blocks) {
+        for (const [x, y, w, h] of blocks) {
+            ctx.fillRect(x, y, w, h);
+        }
     }
     
     // ==========================================

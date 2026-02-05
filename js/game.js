@@ -346,80 +346,145 @@ class Game {
         const ctx = this.ctx;
         const healthPercent = this.player.health / this.player.maxHealth;
         
-        // Position for hearts
-        const startX = 15;
-        const startY = 45;
-        const heartSize = 28;
-        const heartSpacing = 32;
-        
-        // Calculate how many hearts to show (max 5 hearts, each = 20 HP)
-        const maxHearts = 5;
-        const fullHearts = Math.floor(this.player.health / 20);
-        const partialHeart = (this.player.health % 20) / 20;
+        // RASTAN SAGA STYLE: Single anatomical heart that represents ALL health
+        // Position for the single anatomical heart
+        const heartX = 15;
+        const heartY = 42;
+        const heartSize = 56; // Larger single heart
         
         // Get heart sprite frames
         const heartSprites = window.spriteManager && window.spriteManager.sprites.heart;
         
-        for (let i = 0; i < maxHearts; i++) {
-            const x = startX + i * heartSpacing;
-            const y = startY;
-            
-            // Calculate scale for heartbeat
-            let scale = 1;
-            if (i < fullHearts || (i === fullHearts && partialHeart > 0)) {
-                // Animate active hearts
-                scale = this.getHeartbeatScale();
-            }
-            
+        // Calculate heartbeat scale (Rastan Saga style pulsing)
+        const scale = this.getHeartbeatScale();
+        
+        // Color shift based on health (Rastan Saga: heart gets darker/paler as health drops)
+        let colorShift = 1;
+        let saturation = 1;
+        if (healthPercent <= 0.25) {
+            // Critical: heart looks pale/dying, flickers
+            colorShift = 0.6 + Math.sin(Date.now() / 80) * 0.2;
+            saturation = 0.7;
+        } else if (healthPercent <= 0.5) {
+            // Low: slightly desaturated
+            colorShift = 0.8;
+            saturation = 0.85;
+        }
+        
+        ctx.save();
+        ctx.translate(heartX + heartSize/2, heartY + heartSize/2);
+        ctx.scale(scale, scale);
+        
+        // Apply color filter for health state
+        if (healthPercent <= 0.5) {
+            ctx.filter = `saturate(${saturation}) brightness(${colorShift})`;
+        }
+        
+        // Draw the single anatomical heart
+        if (heartSprites && heartSprites[this.heartbeatFrame]) {
+            ctx.drawImage(heartSprites[this.heartbeatFrame], -heartSize/2, -heartSize/2, heartSize, heartSize);
+        } else {
+            // Fallback anatomical heart
+            this.drawAnatomicalHeartFallback(ctx, -heartSize/2, -heartSize/2, heartSize, healthPercent);
+        }
+        
+        ctx.restore();
+        
+        // Draw health percentage as a subtle overlay/drain effect
+        // The heart "drains" from bottom to top as health decreases
+        if (healthPercent < 1) {
             ctx.save();
-            ctx.translate(x + heartSize/2, y + heartSize/2);
-            ctx.scale(scale, scale);
-            ctx.translate(-heartSize/2, -heartSize/2);
+            const drainHeight = heartSize * (1 - healthPercent);
+            const drainY = heartY + heartSize - drainHeight;
             
-            if (i < fullHearts) {
-                // Full heart
-                if (heartSprites && heartSprites[this.heartbeatFrame]) {
-                    ctx.drawImage(heartSprites[this.heartbeatFrame], 0, 0, heartSize, heartSize);
-                } else {
-                    this.drawHeartFallback(ctx, 0, 0, heartSize, '#CC2222');
-                }
-            } else if (i === fullHearts && partialHeart > 0) {
-                // Partial heart (clip to show partial)
-                ctx.save();
-                ctx.beginPath();
-                ctx.rect(0, 0, heartSize * partialHeart, heartSize);
-                ctx.clip();
-                if (heartSprites && heartSprites[this.heartbeatFrame]) {
-                    ctx.drawImage(heartSprites[this.heartbeatFrame], 0, 0, heartSize, heartSize);
-                } else {
-                    this.drawHeartFallback(ctx, 0, 0, heartSize, '#CC2222');
-                }
-                ctx.restore();
-                
-                // Draw empty part
-                ctx.save();
-                ctx.globalAlpha = 0.3;
-                ctx.beginPath();
-                ctx.rect(heartSize * partialHeart, 0, heartSize * (1 - partialHeart), heartSize);
-                ctx.clip();
-                this.drawHeartFallback(ctx, 0, 0, heartSize, '#442222');
-                ctx.restore();
-            } else {
-                // Empty heart
-                ctx.globalAlpha = 0.3;
-                this.drawHeartFallback(ctx, 0, 0, heartSize, '#442222');
-                ctx.globalAlpha = 1;
-            }
-            
+            // Dark overlay on the "empty" portion
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.rect(heartX, heartY, heartSize, heartSize * (1 - healthPercent));
+            ctx.fill();
             ctx.restore();
         }
         
-        // Add glow effect when health is critical
+        // Health text next to heart (Rastan style)
+        ctx.save();
+        ctx.font = 'bold 14px "Press Start 2P", monospace';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.strokeText(`${Math.ceil(healthPercent * 100)}%`, heartX + heartSize + 8, heartY + heartSize/2 + 5);
+        ctx.fillText(`${Math.ceil(healthPercent * 100)}%`, heartX + heartSize + 8, heartY + heartSize/2 + 5);
+        ctx.restore();
+        
+        // Add pulsing glow effect when health is critical
         if (healthPercent <= 0.25) {
-            const glowIntensity = 0.3 + Math.sin(Date.now() / 100) * 0.2;
-            ctx.fillStyle = `rgba(255, 0, 0, ${glowIntensity})`;
-            ctx.fillRect(0, 0, 180, 80);
+            const glowIntensity = 0.15 + Math.sin(Date.now() / 100) * 0.1;
+            ctx.save();
+            ctx.globalAlpha = glowIntensity;
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.arc(heartX + heartSize/2, heartY + heartSize/2, heartSize * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
         }
+    }
+    
+    // Fallback anatomical heart drawing (if sprites fail to load)
+    drawAnatomicalHeartFallback(ctx, x, y, size, healthPercent) {
+        const px = size / 24; // Pixel size for 24x28 grid
+        
+        // Rastan Saga style anatomical heart colors
+        const mainColor = healthPercent > 0.5 ? '#A52A2A' : (healthPercent > 0.25 ? '#8B2020' : '#6B1515');
+        const darkColor = '#4A0A0A';
+        const lightColor = healthPercent > 0.5 ? '#C44040' : '#9A3030';
+        const aortaColor = '#7A2525';
+        
+        // Simplified anatomical heart shape
+        // Main body
+        ctx.fillStyle = mainColor;
+        ctx.beginPath();
+        ctx.moveTo(x + size * 0.5, y + size * 0.9);
+        ctx.quadraticCurveTo(x + size * 0.1, y + size * 0.5, x + size * 0.2, y + size * 0.3);
+        ctx.quadraticCurveTo(x + size * 0.3, y + size * 0.15, x + size * 0.5, y + size * 0.25);
+        ctx.quadraticCurveTo(x + size * 0.7, y + size * 0.15, x + size * 0.8, y + size * 0.3);
+        ctx.quadraticCurveTo(x + size * 0.9, y + size * 0.5, x + size * 0.5, y + size * 0.9);
+        ctx.fill();
+        
+        // Aorta (top pipes)
+        ctx.fillStyle = aortaColor;
+        ctx.fillRect(x + size * 0.35, y + size * 0.05, size * 0.15, size * 0.25);
+        ctx.fillRect(x + size * 0.5, y + size * 0.08, size * 0.12, size * 0.2);
+        ctx.fillRect(x + size * 0.15, y + size * 0.1, size * 0.1, size * 0.18);
+        
+        // Left side shadow
+        ctx.fillStyle = darkColor;
+        ctx.beginPath();
+        ctx.moveTo(x + size * 0.5, y + size * 0.9);
+        ctx.quadraticCurveTo(x + size * 0.15, y + size * 0.55, x + size * 0.22, y + size * 0.35);
+        ctx.lineTo(x + size * 0.35, y + size * 0.4);
+        ctx.quadraticCurveTo(x + size * 0.25, y + size * 0.55, x + size * 0.5, y + size * 0.85);
+        ctx.fill();
+        
+        // Highlights
+        ctx.fillStyle = lightColor;
+        ctx.beginPath();
+        ctx.ellipse(x + size * 0.35, y + size * 0.35, size * 0.08, size * 0.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(x + size * 0.65, y + size * 0.35, size * 0.08, size * 0.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Veins
+        ctx.strokeStyle = darkColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + size * 0.4, y + size * 0.3);
+        ctx.lineTo(x + size * 0.45, y + size * 0.6);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x + size * 0.55, y + size * 0.35);
+        ctx.lineTo(x + size * 0.52, y + size * 0.55);
+        ctx.stroke();
     }
     
     getHeartbeatScale() {
@@ -436,41 +501,6 @@ class Game {
             const relaxPhase = frame - 2; // 1-5
             return 1.18 - relaxPhase * 0.036; // gradual return to 1.0
         }
-    }
-    
-    drawHeartFallback(ctx, x, y, size, color) {
-        // Pixelated heart shape
-        ctx.fillStyle = color;
-        
-        const px = size / 14; // Pixel size
-        
-        // Heart shape data (14x11 grid)
-        const heartData = [
-            [0,0,1,1,1,0,0,0,1,1,1,0,0,0],
-            [0,1,1,1,1,1,0,1,1,1,1,1,0,0],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-            [0,1,1,1,1,1,1,1,1,1,1,1,0,0],
-            [0,0,1,1,1,1,1,1,1,1,1,0,0,0],
-            [0,0,0,1,1,1,1,1,1,1,0,0,0,0],
-            [0,0,0,0,1,1,1,1,1,0,0,0,0,0],
-            [0,0,0,0,0,1,1,1,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,0,0,0,0,0]
-        ];
-        
-        for (let row = 0; row < heartData.length; row++) {
-            for (let col = 0; col < heartData[row].length; col++) {
-                if (heartData[row][col]) {
-                    ctx.fillRect(x + col * px, y + row * px, px, px);
-                }
-            }
-        }
-        
-        // Highlight
-        ctx.fillStyle = '#FF6666';
-        ctx.fillRect(x + 2 * px, y + 1 * px, 2 * px, 2 * px);
-        ctx.fillRect(x + 1 * px, y + 2 * px, 1 * px, 1 * px);
     }
     
     drawMenuBackground() {
@@ -524,22 +554,26 @@ class Game {
     
     drawMenuHearts(time) {
         const ctx = this.ctx;
+        const heartSprites = window.spriteManager && window.spriteManager.sprites.heart;
         
-        // Floating hearts animation on menu
-        for (let i = 0; i < 5; i++) {
-            const x = 150 + i * 120;
-            const y = 380 + Math.sin(time * 2 + i) * 10;
-            const scale = 0.8 + Math.sin(time * 3 + i * 0.5) * 0.1;
-            
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.scale(scale, scale);
-            ctx.globalAlpha = 0.6;
-            
-            this.drawHeartFallback(ctx, -14, -11, 28, '#CC2222');
-            
-            ctx.restore();
+        // Floating anatomical heart on menu (single, larger, prominent)
+        const x = 400;
+        const y = 380 + Math.sin(time * 1.5) * 8;
+        const scale = 1.2 + Math.sin(time * 3) * 0.08;
+        const frame = Math.floor((time * 4) % 8);
+        
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.globalAlpha = 0.7;
+        
+        if (heartSprites && heartSprites[frame]) {
+            ctx.drawImage(heartSprites[frame], -32, -32, 64, 64);
+        } else {
+            this.drawAnatomicalHeartFallback(ctx, -32, -32, 64, 1);
         }
+        
+        ctx.restore();
     }
     
     gameOver() {
