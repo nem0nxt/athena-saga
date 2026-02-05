@@ -1,4 +1,4 @@
-// Enemies for Athena Saga
+// Enemies for Athena Saga (Updated with pixel art sprites)
 
 class Enemy {
     constructor(x, y, type) {
@@ -19,6 +19,10 @@ class Enemy {
         this.attackCooldown = 0;
         this.state = 'idle';
         this.particles = [];
+        
+        // Sprite animation
+        this.spriteFrame = 0;
+        this.spriteTimer = 0;
         
         // Type-specific properties
         this.setupType();
@@ -78,6 +82,13 @@ class Enemy {
         if (this.animTimer > 150) {
             this.animTimer = 0;
             this.animFrame = (this.animFrame + 1) % 4;
+        }
+        
+        // Sprite animation
+        this.spriteTimer += deltaTime;
+        if (this.spriteTimer > 120) {
+            this.spriteTimer = 0;
+            this.spriteFrame = (this.spriteFrame + 1) % 4;
         }
         
         // Type-specific behavior
@@ -373,23 +384,67 @@ class Enemy {
         
         ctx.save();
         
-        if (this.facing === -1) {
-            ctx.translate(screenX + this.width, screenY);
-            ctx.scale(-1, 1);
-        } else {
-            ctx.translate(screenX, screenY);
+        // Try to use sprite system
+        const sprites = window.spriteManager && window.spriteManager.sprites[this.type];
+        let spriteDrawn = false;
+        
+        if (sprites) {
+            let spriteState = this.state;
+            
+            // Map states to available sprite states
+            if (this.type === 'skeleton') {
+                spriteState = (this.state === 'chase' || this.state === 'patrol') ? 'walk' : 'idle';
+            } else if (this.type === 'harpy') {
+                spriteState = this.state === 'attack' ? 'attack' : 'fly';
+            } else if (this.type === 'cyclops') {
+                if (this.state === 'stomp') spriteState = 'stomp';
+                else if (this.state === 'attack') spriteState = 'attack';
+                else if (this.state === 'walk') spriteState = 'walk';
+                else spriteState = 'idle';
+            }
+            
+            if (sprites[spriteState]) {
+                const frames = sprites[spriteState];
+                const frame = frames[this.spriteFrame % frames.length];
+                
+                if (frame) {
+                    spriteDrawn = true;
+                    const spriteWidth = frame.width;
+                    const spriteHeight = frame.height;
+                    const offsetX = (spriteWidth - this.width) / 2;
+                    const offsetY = spriteHeight - this.height;
+                    
+                    if (this.facing === -1) {
+                        ctx.translate(screenX + this.width / 2, screenY - offsetY);
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(frame, -spriteWidth / 2, 0);
+                    } else {
+                        ctx.drawImage(frame, screenX - offsetX, screenY - offsetY);
+                    }
+                }
+            }
         }
         
-        switch (this.type) {
-            case 'skeleton':
-                this.drawSkeleton(ctx);
-                break;
-            case 'harpy':
-                this.drawHarpy(ctx);
-                break;
-            case 'cyclops':
-                this.drawCyclops(ctx);
-                break;
+        // Fallback to old drawing if sprites not available
+        if (!spriteDrawn) {
+            if (this.facing === -1) {
+                ctx.translate(screenX + this.width, screenY);
+                ctx.scale(-1, 1);
+            } else {
+                ctx.translate(screenX, screenY);
+            }
+            
+            switch (this.type) {
+                case 'skeleton':
+                    this.drawSkeletonFallback(ctx);
+                    break;
+                case 'harpy':
+                    this.drawHarpyFallback(ctx);
+                    break;
+                case 'cyclops':
+                    this.drawCyclopsFallback(ctx);
+                    break;
+            }
         }
         
         ctx.restore();
@@ -401,74 +456,28 @@ class Enemy {
         }
     }
     
-    drawSkeleton(ctx) {
+    drawSkeletonFallback(ctx) {
         const walk = this.state === 'chase' || this.state === 'patrol' 
             ? Math.sin(this.animFrame * Math.PI / 2) * 3 : 0;
         
-        // Skull
         ctx.fillStyle = '#e8e8d0';
         ctx.fillRect(8, 0, 16, 16);
-        
-        // Eye sockets
-        ctx.fillStyle = '#2a0a0a';
-        ctx.fillRect(10, 4, 5, 6);
-        ctx.fillRect(17, 4, 5, 6);
-        
-        // Evil red glow in eyes
         ctx.fillStyle = '#ff4444';
         ctx.fillRect(11, 5, 3, 4);
         ctx.fillRect(18, 5, 3, 4);
-        
-        // Jaw
-        ctx.fillStyle = '#d8d8c0';
-        ctx.fillRect(10, 12, 12, 6);
-        ctx.fillStyle = '#2a2a2a';
-        ctx.fillRect(12, 14, 8, 2);
-        
-        // Spine
-        ctx.fillStyle = '#e8e8d0';
         ctx.fillRect(14, 18, 4, 14);
-        
-        // Ribs
-        ctx.fillStyle = '#d8d8c0';
         for (let i = 0; i < 4; i++) {
+            ctx.fillStyle = '#d8d8c0';
             ctx.fillRect(6, 20 + i * 3, 20, 2);
         }
-        
-        // Pelvis
-        ctx.fillStyle = '#e8e8d0';
-        ctx.fillRect(8, 32, 16, 6);
-        
-        // Arms
-        ctx.fillStyle = '#d8d8c0';
-        // Left arm
-        ctx.fillRect(2, 20, 4, 12);
-        // Right arm (holding sword)
-        ctx.fillRect(26, 18, 4, 14);
-        
-        // Rusty sword
-        ctx.fillStyle = '#8b4513';
-        ctx.fillRect(28, 14, 4, 6); // Hilt
-        ctx.fillStyle = '#888888';
-        ctx.fillRect(29, 0, 2, 16); // Blade
-        
-        // Legs
-        ctx.fillStyle = '#d8d8c0';
         ctx.fillRect(8 - walk, 38, 4, 10);
         ctx.fillRect(20 + walk, 38, 4, 10);
-        
-        // Feet
-        ctx.fillStyle = '#c8c8b0';
-        ctx.fillRect(6 - walk, 46, 8, 4);
-        ctx.fillRect(18 + walk, 46, 8, 4);
     }
     
-    drawHarpy(ctx) {
+    drawHarpyFallback(ctx) {
         const wingFlap = Math.sin(this.animFrame * Math.PI / 2) * 15;
         
-        // Wings (behind body)
         ctx.fillStyle = '#6a3a8a';
-        // Left wing
         ctx.beginPath();
         ctx.moveTo(8, 18);
         ctx.lineTo(-15, 8 - wingFlap);
@@ -476,7 +485,6 @@ class Enemy {
         ctx.closePath();
         ctx.fill();
         
-        // Right wing
         ctx.beginPath();
         ctx.moveTo(32, 18);
         ctx.lineTo(55, 8 - wingFlap);
@@ -484,151 +492,32 @@ class Enemy {
         ctx.closePath();
         ctx.fill();
         
-        // Wing feathers
-        ctx.fillStyle = '#8a4aaa';
-        ctx.beginPath();
-        ctx.moveTo(8, 16);
-        ctx.lineTo(-12, 4 - wingFlap);
-        ctx.lineTo(-8, 18);
-        ctx.closePath();
-        ctx.fill();
-        
-        ctx.beginPath();
-        ctx.moveTo(32, 16);
-        ctx.lineTo(52, 4 - wingFlap);
-        ctx.lineTo(48, 18);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Body
         ctx.fillStyle = '#ddb8a0';
         ctx.fillRect(12, 12, 16, 18);
-        
-        // Feathered chest
-        ctx.fillStyle = '#8a4aaa';
-        ctx.fillRect(10, 16, 20, 6);
-        
-        // Head
-        ctx.fillStyle = '#ddb8a0';
         ctx.fillRect(14, 0, 12, 12);
         
-        // Wild hair
-        ctx.fillStyle = '#4a2a6a';
-        ctx.fillRect(12, 0, 16, 6);
-        ctx.fillRect(10, 2, 4, 8);
-        ctx.fillRect(26, 2, 4, 8);
-        
-        // Evil eyes
         ctx.fillStyle = '#ffff00';
         ctx.fillRect(16, 4, 4, 4);
         ctx.fillRect(22, 4, 4, 4);
-        ctx.fillStyle = '#000';
-        ctx.fillRect(17, 5, 2, 2);
-        ctx.fillRect(23, 5, 2, 2);
-        
-        // Beak/mouth
-        ctx.fillStyle = '#ff6644';
-        ctx.fillRect(18, 8, 4, 3);
-        
-        // Talons
-        ctx.fillStyle = '#4a4a4a';
-        const talonSwing = this.state === 'attack' ? 10 : 0;
-        ctx.fillRect(14, 30 + talonSwing, 4, 8);
-        ctx.fillRect(22, 30 + talonSwing, 4, 8);
-        
-        // Claws
-        ctx.fillStyle = '#2a2a2a';
-        ctx.fillRect(12, 36 + talonSwing, 8, 3);
-        ctx.fillRect(20, 36 + talonSwing, 8, 3);
     }
     
-    drawCyclops(ctx) {
+    drawCyclopsFallback(ctx) {
         const walk = this.state === 'walk' ? Math.sin(this.animFrame * Math.PI / 2) * 5 : 0;
-        const isAttacking = this.state === 'attack' || this.state === 'stomp';
         
-        // Legs
         ctx.fillStyle = '#885533';
         ctx.fillRect(15 - walk, 70, 18, 26);
         ctx.fillRect(47 + walk, 70, 18, 26);
         
-        // Feet
-        ctx.fillStyle = '#775522';
-        ctx.fillRect(10 - walk, 90, 28, 8);
-        ctx.fillRect(42 + walk, 90, 28, 8);
-        
-        // Body
         ctx.fillStyle = '#996644';
         ctx.fillRect(10, 30, 60, 45);
         
-        // Chest details
-        ctx.fillStyle = '#aa7755';
-        ctx.fillRect(20, 40, 40, 20);
-        
-        // Belly
-        ctx.fillStyle = '#bb8866';
-        ctx.fillRect(25, 55, 30, 15);
-        
-        // Belt/loincloth
-        ctx.fillStyle = '#554422';
-        ctx.fillRect(15, 68, 50, 8);
-        ctx.fillStyle = '#443311';
-        ctx.fillRect(25, 68, 30, 12);
-        
-        // Left arm
-        ctx.fillStyle = '#996644';
-        ctx.fillRect(0, 35, 14, 35);
-        
-        // Right arm (holding club)
-        if (isAttacking) {
-            // Arm raised
-            ctx.fillRect(66, 20, 14, 35);
-            // Club
-            ctx.fillStyle = '#4a3520';
-            ctx.fillRect(72, -10, 12, 40);
-            ctx.fillStyle = '#3a2510';
-            ctx.fillRect(70, -15, 16, 10);
-        } else {
-            ctx.fillRect(66, 40, 14, 35);
-            // Club at rest
-            ctx.fillStyle = '#4a3520';
-            ctx.fillRect(70, 50, 12, 50);
-            ctx.fillStyle = '#3a2510';
-            ctx.fillRect(68, 45, 16, 10);
-        }
-        
-        // Head
         ctx.fillStyle = '#aa7755';
         ctx.fillRect(20, 0, 40, 35);
         
-        // Single eye
         ctx.fillStyle = '#ffffcc';
         ctx.fillRect(30, 10, 20, 16);
-        
-        // Pupil
-        const eyeX = this.facing === 1 ? 38 : 34;
         ctx.fillStyle = '#aa0000';
-        ctx.fillRect(eyeX, 14, 8, 8);
-        ctx.fillStyle = '#000';
-        ctx.fillRect(eyeX + 2, 16, 4, 4);
-        
-        // Angry eyebrow
-        ctx.fillStyle = '#664422';
-        ctx.fillRect(28, 6, 24, 6);
-        
-        // Mouth
-        ctx.fillStyle = '#442211';
-        ctx.fillRect(30, 26, 20, 6);
-        
-        // Teeth
-        ctx.fillStyle = '#ddddaa';
-        ctx.fillRect(32, 26, 4, 4);
-        ctx.fillRect(38, 26, 4, 4);
-        ctx.fillRect(44, 26, 4, 4);
-        
-        // Ears
-        ctx.fillStyle = '#885533';
-        ctx.fillRect(16, 12, 6, 12);
-        ctx.fillRect(58, 12, 6, 12);
+        ctx.fillRect(36, 14, 8, 8);
     }
     
     drawBossHealthBar(ctx, cameraX) {

@@ -38,14 +38,14 @@ body {
     right: 10px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     pointer-events: none;
 }
 
 #health-bar {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 4px;
 }
 
 #health-bar span {
@@ -61,12 +61,23 @@ body {
     border: 2px solid #fff;
     box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
     transition: width 0.2s;
+    /* Hidden by default - replaced by heart display */
+    display: none;
+}
+
+/* Hearts container area - reserve space for canvas-drawn hearts */
+#health-bar::after {
+    content: '';
+    display: block;
+    width: 170px;
+    height: 36px;
 }
 
 #score {
     color: #c9a227;
     font-size: 12px;
     text-shadow: 2px 2px #000;
+    text-align: right;
 }
 
 /* Screens */
@@ -101,6 +112,15 @@ body {
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
+}
+
+/* Heart pulse animation for critical health warning */
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    15% { transform: scale(1.15); }
+    30% { transform: scale(1.1); }
+    45% { transform: scale(1.12); }
+    60% { transform: scale(1); }
 }
 
 .subtitle {
@@ -169,6 +189,13 @@ button:active {
 /* Game Over specific */
 #game-over-screen h1 {
     color: #ff4444;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 
 #game-over-screen p,
@@ -180,4 +207,26 @@ button:active {
 
 #victory-screen h1 {
     color: #ffd700;
+    animation: victoryPulse 1s ease-in-out infinite;
+}
+
+@keyframes victoryPulse {
+    0%, 100% { 
+        transform: scale(1);
+        text-shadow: 3px 3px #8b4513, 6px 6px #000;
+    }
+    50% { 
+        transform: scale(1.1);
+        text-shadow: 4px 4px #ffd700, 8px 8px #000;
+    }
+}
+
+/* Critical health warning flash */
+.critical-health {
+    animation: criticalFlash 0.3s ease-in-out infinite;
+}
+
+@keyframes criticalFlash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }

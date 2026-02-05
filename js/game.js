@@ -1,4 +1,4 @@
-// Athena Saga - Main Game Engine
+// Athena Saga - Main Game Engine (Updated with heartbeat health indicator)
 
 class Game {
     constructor() {
@@ -31,6 +31,11 @@ class Game {
         this.enemyManager = null;
         this.levelRenderer = null;
         this.powerUps = [];
+        
+        // Heartbeat animation state
+        this.heartbeatTimer = 0;
+        this.heartbeatFrame = 0;
+        this.heartbeatSpeed = 800; // Normal BPM ~75
         
         // UI elements
         this.healthFill = document.getElementById('health-fill');
@@ -127,6 +132,8 @@ class Game {
         this.score = 0;
         this.camera.x = 0;
         this.screenShake = 0;
+        this.heartbeatTimer = 0;
+        this.heartbeatFrame = 0;
         
         // Hide screens
         this.startScreen.classList.add('hidden');
@@ -205,6 +212,9 @@ class Game {
             this.screenShake -= deltaTime;
         }
         
+        // Update heartbeat animation
+        this.updateHeartbeat(deltaTime);
+        
         // Update UI
         this.updateUI();
         
@@ -250,6 +260,37 @@ class Game {
         });
     }
     
+    updateHeartbeat(deltaTime) {
+        // Calculate heartbeat speed based on health (like Rastan Saga)
+        // Low health = faster heartbeat
+        const healthPercent = this.player.health / this.player.maxHealth;
+        
+        if (healthPercent <= 0.25) {
+            // Critical! Very fast heartbeat
+            this.heartbeatSpeed = 250;
+        } else if (healthPercent <= 0.5) {
+            // Low health - fast heartbeat
+            this.heartbeatSpeed = 400;
+        } else if (healthPercent <= 0.75) {
+            // Medium health
+            this.heartbeatSpeed = 600;
+        } else {
+            // Good health - normal heartbeat
+            this.heartbeatSpeed = 800;
+        }
+        
+        this.heartbeatTimer += deltaTime;
+        
+        // 8 frames for heartbeat animation
+        // Frames 0-2: systole (contract/pump), 3-7: diastole (relax)
+        const frameDuration = this.heartbeatSpeed / 8;
+        
+        if (this.heartbeatTimer >= frameDuration) {
+            this.heartbeatTimer = 0;
+            this.heartbeatFrame = (this.heartbeatFrame + 1) % 8;
+        }
+    }
+    
     updateUI() {
         // Health bar
         const healthPercent = Math.max(0, this.player.health / this.player.maxHealth * 100);
@@ -293,9 +334,143 @@ class Game {
             
             // Draw player
             this.player.draw(ctx, this.camera.x);
+            
+            // Draw heartbeat health indicator (on top of game)
+            this.drawHeartbeatHealth();
         }
         
         ctx.restore();
+    }
+    
+    drawHeartbeatHealth() {
+        const ctx = this.ctx;
+        const healthPercent = this.player.health / this.player.maxHealth;
+        
+        // Position for hearts
+        const startX = 15;
+        const startY = 45;
+        const heartSize = 28;
+        const heartSpacing = 32;
+        
+        // Calculate how many hearts to show (max 5 hearts, each = 20 HP)
+        const maxHearts = 5;
+        const fullHearts = Math.floor(this.player.health / 20);
+        const partialHeart = (this.player.health % 20) / 20;
+        
+        // Get heart sprite frames
+        const heartSprites = window.spriteManager && window.spriteManager.sprites.heart;
+        
+        for (let i = 0; i < maxHearts; i++) {
+            const x = startX + i * heartSpacing;
+            const y = startY;
+            
+            // Calculate scale for heartbeat
+            let scale = 1;
+            if (i < fullHearts || (i === fullHearts && partialHeart > 0)) {
+                // Animate active hearts
+                scale = this.getHeartbeatScale();
+            }
+            
+            ctx.save();
+            ctx.translate(x + heartSize/2, y + heartSize/2);
+            ctx.scale(scale, scale);
+            ctx.translate(-heartSize/2, -heartSize/2);
+            
+            if (i < fullHearts) {
+                // Full heart
+                if (heartSprites && heartSprites[this.heartbeatFrame]) {
+                    ctx.drawImage(heartSprites[this.heartbeatFrame], 0, 0, heartSize, heartSize);
+                } else {
+                    this.drawHeartFallback(ctx, 0, 0, heartSize, '#CC2222');
+                }
+            } else if (i === fullHearts && partialHeart > 0) {
+                // Partial heart (clip to show partial)
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(0, 0, heartSize * partialHeart, heartSize);
+                ctx.clip();
+                if (heartSprites && heartSprites[this.heartbeatFrame]) {
+                    ctx.drawImage(heartSprites[this.heartbeatFrame], 0, 0, heartSize, heartSize);
+                } else {
+                    this.drawHeartFallback(ctx, 0, 0, heartSize, '#CC2222');
+                }
+                ctx.restore();
+                
+                // Draw empty part
+                ctx.save();
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath();
+                ctx.rect(heartSize * partialHeart, 0, heartSize * (1 - partialHeart), heartSize);
+                ctx.clip();
+                this.drawHeartFallback(ctx, 0, 0, heartSize, '#442222');
+                ctx.restore();
+            } else {
+                // Empty heart
+                ctx.globalAlpha = 0.3;
+                this.drawHeartFallback(ctx, 0, 0, heartSize, '#442222');
+                ctx.globalAlpha = 1;
+            }
+            
+            ctx.restore();
+        }
+        
+        // Add glow effect when health is critical
+        if (healthPercent <= 0.25) {
+            const glowIntensity = 0.3 + Math.sin(Date.now() / 100) * 0.2;
+            ctx.fillStyle = `rgba(255, 0, 0, ${glowIntensity})`;
+            ctx.fillRect(0, 0, 180, 80);
+        }
+    }
+    
+    getHeartbeatScale() {
+        // Heartbeat animation curve (like Rastan Saga)
+        // Quick pump (systole) then slow relax (diastole)
+        const frame = this.heartbeatFrame;
+        
+        // Systole: frames 0-2 (quick expansion)
+        if (frame < 3) {
+            return 1 + (frame + 1) * 0.06; // 1.06, 1.12, 1.18
+        }
+        // Diastole: frames 3-7 (slow contraction)
+        else {
+            const relaxPhase = frame - 2; // 1-5
+            return 1.18 - relaxPhase * 0.036; // gradual return to 1.0
+        }
+    }
+    
+    drawHeartFallback(ctx, x, y, size, color) {
+        // Pixelated heart shape
+        ctx.fillStyle = color;
+        
+        const px = size / 14; // Pixel size
+        
+        // Heart shape data (14x11 grid)
+        const heartData = [
+            [0,0,1,1,1,0,0,0,1,1,1,0,0,0],
+            [0,1,1,1,1,1,0,1,1,1,1,1,0,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+            [0,1,1,1,1,1,1,1,1,1,1,1,0,0],
+            [0,0,1,1,1,1,1,1,1,1,1,0,0,0],
+            [0,0,0,1,1,1,1,1,1,1,0,0,0,0],
+            [0,0,0,0,1,1,1,1,1,0,0,0,0,0],
+            [0,0,0,0,0,1,1,1,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,0,0,0,0,0]
+        ];
+        
+        for (let row = 0; row < heartData.length; row++) {
+            for (let col = 0; col < heartData[row].length; col++) {
+                if (heartData[row][col]) {
+                    ctx.fillRect(x + col * px, y + row * px, px, px);
+                }
+            }
+        }
+        
+        // Highlight
+        ctx.fillStyle = '#FF6666';
+        ctx.fillRect(x + 2 * px, y + 1 * px, 2 * px, 2 * px);
+        ctx.fillRect(x + 1 * px, y + 2 * px, 1 * px, 1 * px);
     }
     
     drawMenuBackground() {
@@ -342,6 +517,29 @@ class Game {
         // Ground
         ctx.fillStyle = '#0a0510';
         ctx.fillRect(0, 420, 800, 60);
+        
+        // Draw animated hearts on menu
+        this.drawMenuHearts(time);
+    }
+    
+    drawMenuHearts(time) {
+        const ctx = this.ctx;
+        
+        // Floating hearts animation on menu
+        for (let i = 0; i < 5; i++) {
+            const x = 150 + i * 120;
+            const y = 380 + Math.sin(time * 2 + i) * 10;
+            const scale = 0.8 + Math.sin(time * 3 + i * 0.5) * 0.1;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            ctx.globalAlpha = 0.6;
+            
+            this.drawHeartFallback(ctx, -14, -11, 28, '#CC2222');
+            
+            ctx.restore();
+        }
     }
     
     gameOver() {

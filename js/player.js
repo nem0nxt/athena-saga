@@ -1,4 +1,4 @@
-// Athena - Player Character
+// Athena - Player Character (Updated with pixel art sprites)
 
 class Player {
     constructor(x, y) {
@@ -32,6 +32,10 @@ class Player {
         this.animFrame = 0;
         this.animTimer = 0;
         this.state = 'idle'; // idle, run, jump, attack, block, hurt
+        
+        // Sprite animation
+        this.spriteFrame = 0;
+        this.spriteTimer = 0;
         
         // Attack hitbox
         this.attackBox = { x: 0, y: 0, width: 60, height: 40, active: false };
@@ -117,6 +121,9 @@ class Player {
         // Update animation
         this.updateAnimation(deltaTime);
         
+        // Update sprite animation
+        this.updateSpriteAnimation(deltaTime);
+        
         // Update particles
         this.updateParticles(deltaTime);
         
@@ -141,6 +148,7 @@ class Player {
         this.attackCooldown = 400;
         this.attackBox.active = true;
         this.animFrame = 0;
+        this.spriteFrame = 0;
         this.addAttackParticles();
         
         // Attack duration
@@ -187,6 +195,41 @@ class Player {
         if (this.animTimer >= frameSpeed) {
             this.animTimer = 0;
             this.animFrame = (this.animFrame + 1) % 4;
+        }
+    }
+    
+    updateSpriteAnimation(deltaTime) {
+        this.spriteTimer += deltaTime;
+        
+        let frameSpeed = 150;
+        let maxFrames = 4;
+        
+        switch (this.state) {
+            case 'idle':
+                frameSpeed = 200;
+                maxFrames = 4;
+                break;
+            case 'run':
+                frameSpeed = 80;
+                maxFrames = 6;
+                break;
+            case 'attack':
+                frameSpeed = 50;
+                maxFrames = 4;
+                break;
+            case 'jump':
+                frameSpeed = 200;
+                maxFrames = 2;
+                break;
+            case 'block':
+                frameSpeed = 200;
+                maxFrames = 1;
+                break;
+        }
+        
+        if (this.spriteTimer >= frameSpeed) {
+            this.spriteTimer = 0;
+            this.spriteFrame = (this.spriteFrame + 1) % maxFrames;
         }
     }
     
@@ -346,257 +389,71 @@ class Player {
         
         ctx.save();
         
-        // Flip sprite if facing left
-        if (this.facing === -1) {
-            ctx.translate(screenX + this.width, screenY);
-            ctx.scale(-1, 1);
-        } else {
-            ctx.translate(screenX, screenY);
-        }
+        // Get sprite from sprite manager
+        const sprites = window.spriteManager && window.spriteManager.sprites.athena;
         
-        // Draw Athena
-        this.drawAthena(ctx);
+        if (sprites && sprites[this.state]) {
+            const frames = sprites[this.state];
+            const frame = frames[this.spriteFrame % frames.length];
+            
+            if (frame) {
+                // Calculate position for centered sprite
+                const spriteWidth = frame.width;
+                const spriteHeight = frame.height;
+                const offsetX = (spriteWidth - this.width) / 2;
+                const offsetY = spriteHeight - this.height - 8;
+                
+                if (this.facing === -1) {
+                    ctx.translate(screenX + this.width / 2, screenY - offsetY);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(frame, -spriteWidth / 2, 0);
+                } else {
+                    ctx.drawImage(frame, screenX - offsetX, screenY - offsetY);
+                }
+            }
+        } else {
+            // Fallback to old drawing method
+            if (this.facing === -1) {
+                ctx.translate(screenX + this.width, screenY);
+                ctx.scale(-1, 1);
+            } else {
+                ctx.translate(screenX, screenY);
+            }
+            this.drawAthenaFallback(ctx);
+        }
         
         ctx.restore();
         ctx.globalAlpha = 1;
-        
-        // Debug: draw attack box
-        // if (this.attackBox.active) {
-        //     ctx.strokeStyle = 'red';
-        //     ctx.strokeRect(this.attackBox.x - cameraX, this.attackBox.y, this.attackBox.width, this.attackBox.height);
-        // }
     }
     
-    drawAthena(ctx) {
+    drawAthenaFallback(ctx) {
+        // Simplified fallback rendering
         const bounce = this.state === 'run' ? Math.sin(this.animFrame * Math.PI / 2) * 2 : 0;
         
-        // Leg animation offset
-        const legOffset = this.state === 'run' ? Math.sin(this.animFrame * Math.PI / 2) * 6 : 0;
-        
-        // ===== BODY =====
-        // Chiton (Greek dress) - White/cream
+        // Body
         ctx.fillStyle = '#f5f5dc';
         ctx.fillRect(12, 24 - bounce, 16, 24);
         
-        // Dress details
-        ctx.fillStyle = '#e8e4c9';
-        ctx.fillRect(14, 28 - bounce, 3, 18);
-        ctx.fillRect(23, 28 - bounce, 3, 18);
-        
-        // Golden belt
-        ctx.fillStyle = '#daa520';
-        ctx.fillRect(10, 32 - bounce, 20, 4);
-        ctx.fillStyle = '#ffd700';
-        ctx.fillRect(18, 32 - bounce, 4, 4); // Belt buckle
-        
-        // ===== ARMOR =====
-        // Breastplate (bronze/gold)
+        // Armor
         ctx.fillStyle = '#cd7f32';
         ctx.fillRect(12, 20 - bounce, 16, 12);
-        ctx.fillStyle = '#daa520';
-        ctx.fillRect(14, 22 - bounce, 12, 8);
         
-        // Shoulder guards
-        ctx.fillStyle = '#cd7f32';
-        ctx.fillRect(6, 18 - bounce, 10, 8);
-        ctx.fillRect(24, 18 - bounce, 10, 8);
-        
-        // ===== HEAD =====
-        // Face
+        // Head
         ctx.fillStyle = '#f4c7a5';
         ctx.fillRect(14, 4 - bounce, 12, 14);
         
-        // Hair (dark brown/black)
-        ctx.fillStyle = '#2a1a0a';
-        ctx.fillRect(12, 0 - bounce, 16, 8);
-        ctx.fillRect(10, 4 - bounce, 4, 10);
-        ctx.fillRect(26, 4 - bounce, 4, 10);
-        
-        // Helmet (Corinthian style)
+        // Helmet
         ctx.fillStyle = '#cd7f32';
         ctx.fillRect(10, 0 - bounce, 20, 6);
-        ctx.fillRect(12, -4 - bounce, 16, 6);
         
-        // Helmet crest (red plume)
+        // Plume
         ctx.fillStyle = '#cc2222';
-        for (let i = 0; i < 8; i++) {
-            const plumeY = -8 - bounce + Math.sin((this.animFrame + i) * 0.5) * 2;
-            ctx.fillRect(16 + i, plumeY - i * 0.5, 4, 6);
-        }
+        ctx.fillRect(16, -8 - bounce, 8, 10);
         
-        // Eyes
-        ctx.fillStyle = '#4a90d9';
-        ctx.fillRect(16, 8 - bounce, 3, 3);
-        ctx.fillRect(21, 8 - bounce, 3, 3);
-        
-        // ===== LEGS =====
-        // Left leg
+        // Legs
         ctx.fillStyle = '#f4c7a5';
-        ctx.fillRect(12 - legOffset / 2, 46 - bounce, 6, 10);
-        // Sandal
-        ctx.fillStyle = '#8b4513';
-        ctx.fillRect(11 - legOffset / 2, 54 - bounce, 8, 4);
-        
-        // Right leg
-        ctx.fillStyle = '#f4c7a5';
-        ctx.fillRect(22 + legOffset / 2, 46 - bounce, 6, 10);
-        // Sandal
-        ctx.fillStyle = '#8b4513';
-        ctx.fillRect(21 + legOffset / 2, 54 - bounce, 8, 4);
-        
-        // ===== ARMS & WEAPONS =====
-        if (this.state === 'attack') {
-            this.drawAttackPose(ctx, bounce);
-        } else if (this.state === 'block' || this.blocking) {
-            this.drawBlockPose(ctx, bounce);
-        } else {
-            this.drawIdlePose(ctx, bounce);
-        }
-    }
-    
-    drawIdlePose(ctx, bounce) {
-        // Left arm (holding shield at rest)
-        ctx.fillStyle = '#f4c7a5';
-        ctx.fillRect(4, 22 - bounce, 6, 14);
-        
-        // Shield (at side)
-        ctx.fillStyle = '#cd7f32';
-        ctx.beginPath();
-        ctx.ellipse(4, 32 - bounce, 8, 12, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#daa520';
-        ctx.beginPath();
-        ctx.ellipse(4, 32 - bounce, 5, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // Owl emblem (simplified)
-        ctx.fillStyle = '#cd7f32';
-        ctx.fillRect(2, 30 - bounce, 4, 4);
-        
-        // Right arm (holding spear)
-        ctx.fillStyle = '#f4c7a5';
-        ctx.fillRect(30, 22 - bounce, 6, 14);
-        
-        // Spear
-        this.drawSpear(ctx, 38, 10 - bounce, 0, bounce);
-    }
-    
-    drawAttackPose(ctx, bounce) {
-        // Thrust animation
-        const thrustOffset = this.animFrame * 10;
-        
-        // Left arm (shield forward)
-        ctx.fillStyle = '#f4c7a5';
-        ctx.fillRect(4, 20 - bounce, 6, 12);
-        
-        // Shield
-        ctx.fillStyle = '#cd7f32';
-        ctx.beginPath();
-        ctx.ellipse(2, 28 - bounce, 8, 12, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#daa520';
-        ctx.beginPath();
-        ctx.ellipse(2, 28 - bounce, 5, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Right arm extended
-        ctx.fillStyle = '#f4c7a5';
-        ctx.fillRect(30, 18 - bounce, 10 + thrustOffset / 2, 6);
-        
-        // Spear thrust
-        this.drawSpear(ctx, 38 + thrustOffset, 14 - bounce, 1, bounce);
-    }
-    
-    drawBlockPose(ctx, bounce) {
-        // Shield raised in front
-        ctx.fillStyle = '#f4c7a5';
-        ctx.fillRect(26, 18 - bounce, 8, 12);
-        
-        // Shield (raised)
-        ctx.fillStyle = '#cd7f32';
-        ctx.beginPath();
-        ctx.ellipse(38, 22 - bounce, 12, 18, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#daa520';
-        ctx.beginPath();
-        ctx.ellipse(38, 22 - bounce, 8, 12, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // Owl emblem
-        ctx.fillStyle = '#cd7f32';
-        ctx.fillRect(36, 20 - bounce, 4, 4);
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(36, 20 - bounce, 2, 2);
-        ctx.fillRect(38, 20 - bounce, 2, 2);
-        
-        // Left arm holding spear back
-        ctx.fillStyle = '#f4c7a5';
-        ctx.fillRect(6, 24 - bounce, 6, 12);
-        
-        // Spear pointed up
-        this.drawSpear(ctx, 4, 0 - bounce, 2, bounce);
-    }
-    
-    drawSpear(ctx, x, y, pose, bounce) {
-        const weaponColors = [
-            { shaft: '#8b4513', tip: '#c0c0c0' },
-            { shaft: '#654321', tip: '#ffd700' },
-            { shaft: '#4a2511', tip: '#00ffff' }
-        ];
-        const colors = weaponColors[this.weaponLevel - 1];
-        
-        if (pose === 0) {
-            // Idle - diagonal
-            ctx.fillStyle = colors.shaft;
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(-0.3);
-            ctx.fillRect(0, 0, 4, 50);
-            // Tip
-            ctx.fillStyle = colors.tip;
-            ctx.beginPath();
-            ctx.moveTo(2, -10);
-            ctx.lineTo(-2, 4);
-            ctx.lineTo(6, 4);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-        } else if (pose === 1) {
-            // Attack thrust - horizontal
-            ctx.fillStyle = colors.shaft;
-            ctx.fillRect(x, y, 50, 4);
-            // Tip
-            ctx.fillStyle = colors.tip;
-            ctx.beginPath();
-            ctx.moveTo(x + 60, y + 2);
-            ctx.lineTo(x + 48, y - 4);
-            ctx.lineTo(x + 48, y + 8);
-            ctx.closePath();
-            ctx.fill();
-            
-            // Weapon glow effect for higher levels
-            if (this.weaponLevel >= 2) {
-                ctx.globalAlpha = 0.5;
-                ctx.fillStyle = colors.tip;
-                ctx.beginPath();
-                ctx.moveTo(x + 65, y + 2);
-                ctx.lineTo(x + 48, y - 8);
-                ctx.lineTo(x + 48, y + 12);
-                ctx.closePath();
-                ctx.fill();
-                ctx.globalAlpha = 1;
-            }
-        } else {
-            // Block - vertical
-            ctx.fillStyle = colors.shaft;
-            ctx.fillRect(x, y, 4, 45);
-            // Tip
-            ctx.fillStyle = colors.tip;
-            ctx.beginPath();
-            ctx.moveTo(x + 2, y - 10);
-            ctx.lineTo(x - 3, y);
-            ctx.lineTo(x + 7, y);
-            ctx.closePath();
-            ctx.fill();
-        }
+        ctx.fillRect(12, 46 - bounce, 6, 10);
+        ctx.fillRect(22, 46 - bounce, 6, 10);
     }
     
     drawParticles(ctx, cameraX) {
