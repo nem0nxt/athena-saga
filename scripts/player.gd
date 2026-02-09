@@ -26,10 +26,14 @@ var is_attacking: bool = false
 const ANIM_IDLE = "Idle"
 const ANIM_WALK = "Walk"
 const ANIM_RUN = "Run"
+const ANIM_STRAFE_LEFT = "Strafe_Left"
+const ANIM_STRAFE_RIGHT = "Strafe_Right"
 const ANIM_JUMP_START = "Jump_Start"
 const ANIM_JUMP_LOOP = "Jump_Loop"
 const ANIM_JUMP_END = "Jump_End"
-const ANIM_ATTACK = "attack"
+const ANIM_ATTACK = "Attack_Combo"
+const ANIM_TAKE_DAMAGE = "Take_Damage"
+const ANIM_DEATH = "Death"
 
 # Chunk Manager integration
 var chunk_manager = null
@@ -87,7 +91,16 @@ func _physics_process(delta: float) -> void:
 		# Animation
 		if is_on_floor() and not is_attacking:
 			if direction.length() > 0.5:
-				play_animation(ANIM_RUN)
+				# Strafe vs Run based on camera angle
+				var forward_dot = abs(direction.dot(Vector3.FORWARD))
+				if forward_dot > 0.7:
+					play_animation(ANIM_RUN)
+				else:
+					# Side movement - could use strafe animations
+					if direction.x > 0:
+						play_animation(ANIM_STRAFE_RIGHT)
+					else:
+						play_animation(ANIM_STRAFE_LEFT)
 			else:
 				play_animation(ANIM_IDLE)
 	else:
@@ -167,12 +180,14 @@ func check_attack_hit() -> void:
 
 func take_damage(amount: float) -> void:
 	health -= amount
+	play_animation(ANIM_TAKE_DAMAGE)
 	# Flash effect, knockback, etc.
 	if health <= 0:
+		await get_tree().create_timer(0.5).timeout
 		die()
 
 func die() -> void:
-	# Game over logic
+	play_animation(ANIM_DEATH)
 	print("Player died!")
 
 func play_animation(anim_name: String) -> void:
