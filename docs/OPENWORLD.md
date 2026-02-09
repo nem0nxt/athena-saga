@@ -1,184 +1,179 @@
-# Open World System - Athena Saga
+# Open World Chunk System Documentation
+
+This document describes the chunk streaming system implemented for Athena Saga.
 
 ## Overview
 
-This document describes the open-world chunk streaming system implemented for Athena Saga. The system divides the world into small, manageable chunks that load and unload based on player position, enabling infinite exploration without memory issues.
+The chunk system divides the game world into a grid of terrain tiles (chunks) that are loaded and unloaded dynamically based on the player's position. This allows for an effectively infinite open world while maintaining good performance.
 
-## Architecture
+## How It Works
 
-### ChunkManager (`scripts/chunk_manager.gd`)
+### Chunk Grid System
 
-The `ChunkManager` is the central controller for chunk streaming. It:
-- Maintains a grid of currently loaded chunks
-- Tracks player position and calculates which chunk the player is in
-- Loads new chunks as the player moves
-- Unloads chunks that are outside the render distance
+```
+World Position → Chunk Coordinates → Load/Unload Decision
 
-**Configuration:**
-```gdscript
-@export var chunk_size: float = 64.0      # Size of each chunk in world units
-@export var render_distance: int = 3       # Chunks to load in each direction
-@export var chunk_scene: PackedScene       # Reference to terrain_chunk.tscn
-@export var player_path: NodePath          # Path to player node
+Example:
+- Player at (75, 120) world position
+- Chunk size = 50
+- Chunk coordinates = floor(75/50), floor(120/50) = (1, 2)
 ```
 
-**Key Functions:**
-- `get_chunk_pos(world_pos: Vector3) -> Vector2i` - Convert world position to chunk coordinates
-- `get_chunk_world_pos(chunk_pos: Vector2i) -> Vector3` - Convert chunk coordinates to world position
-- `reload_all()` - Force reload all chunks (useful after changes)
+### Loading Logic
 
-### TerrainChunk (`scripts/terrain_chunk.gd`)
+1. **ChunkManager** monitors player position every 0.5 seconds
+2. Calculates current chunk coordinates from player position
+3. Loads all chunks within `render_distance` of current chunk
+4. Unloads chunks that are beyond `render_distance`
+5. Uses **Manhattan distance** for chunk culling (faster than Euclidean)
 
-Each chunk is a `StaticBody3D` that generates procedural terrain using noise. Features:
-- Procedural heightmap terrain generation using FastNoiseLite
-- Automatic collision mesh generation
-- LOD support (placeholder for future optimization)
-- Methods to add buildings and props
+### Chunk Structure
 
-**Configuration:**
+Each chunk contains:
+- **Terrain mesh**: Procedurally generated with height variations
+- **Collision**: Simple box collider for physics
+- **StaticBody3D**: For physics interactions
+
+## Configuration Parameters
+
+Edit `scripts/chunk_manager.gd` to configure:
+
 ```gdscript
-@export var height_scale: float = 10.0    # Maximum terrain height
-@export var noise_scale: float = 0.05     # Noise frequency
-@export var material: StandardMaterial3D  # Terrain surface material
+@export var chunk_size: float = 50.0      # Size of each chunk in world units
+@export var render_distance: int = 2      # Chunks to load in each direction (2 = 5x5 grid)
+@export var update_interval: float = 0.5  # Seconds between chunk position checks
+@export var world_seed: int = 12345       # Seed for procedural terrain generation
+@export var is_debug_mode: bool = false   # Enable debug logging
 ```
 
-**Terrain Generation:**
-The terrain uses FastNoiseLite with fractal FBM (Fractal Brownian Motion) for natural-looking hills and valleys. Each chunk uses the chunk position as the noise seed to ensure consistent terrain.
+### Performance Tuning
 
-## Usage
+| Setting | Effect |
+|---------|--------|
+| `render_distance = 1` | 3x3 grid, lowest memory |
+| `render_distance = 2` | 5x5 grid, balanced (default) |
+| `render_distance = 3` | 7x7 grid, higher memory |
+| `update_interval = 0.1` | Faster updates, more CPU |
+| `update_interval = 1.0` | Slower updates, less CPU |
+| `chunk_size = 100` | Larger chunks, fewer draw calls |
+| `chunk_size = 25` | Smaller chunks, more draw calls |
 
-### Basic Setup
+## Adding Buildings and Interiors
 
-1. Ensure `scenes/terrain_chunk.tscn` exists with the `TerrainChunk` script attached
-2. Ensure `scenes/main.tscn` has a `ChunkManager` node configured
-3. Run the game - chunks will automatically load around the player
+### Method 1: Chunk-Based Placement (Recommended for Open World)
 
-### Customizing Terrain
-
-To change terrain appearance, modify the `TerrainChunk` script:
-
-**Different terrain types:**
-```gdscript
-# In _create_terrain(), change the material:
-material = StandardMaterial3D.new()
-material.albedo_color = Color(0.6, 0.4, 0.2)  # Brown earth
-material.albedo_texture = load("res://assets/textures/grass.png")
-```
-
-**Different noise settings:**
-```gdscript
-# In _generate_height_map():
-noise.frequency = 0.02  # Smoother, rolling hills
-noise.fractal_octaves = 8  # More detailed
-```
-
-### Adding Buildings
-
-Buildings are added to chunks dynamically. Create interior scenes and add them:
+Buildings should be placed within specific chunks:
 
 ```gdscript
-# In TerrainChunk.gd or a game manager:
-var house_scene = preload("res://scenes/house.tscn")
-var current_chunk = chunk_manager.get_current_chunk()
-current_chunk.add_building(house_scene, Vector3(10, 0, 15))
-```
-
-### Adding Props
-
-Props like trees, rocks, and decorations:
-
-```gdscript
-var tree_scene = preload("res://scenes/tree.tscn")
-var current_chunk = chunk_manager.get_current_chunk()
-current_chunk.add_prop(tree_scene, Vector3(5, 0, 20), rotation_degrees(45))
-```
-
-## Performance Optimization
-
-### Current State
-- Basic LOD system (can be expanded)
-- Simple collision generation
-
-### Future Improvements
-1. **LOD System:** Implement true LOD with distance-based mesh simplification
-2. **Mesh Instancing:** Use MultiMeshInstance3D for repeated props (trees, rocks)
-3. **Occlusion Culling:** Add occlusion portals for indoor areas
-4. **Async Loading:** Use `await` and threading for smoother chunk loading
-5. **Pre-loading:** Anticipate player movement and pre-load adjacent chunks
-
-### Configuration Tuning
-
-For better performance:
-```gdscript
-# In ChunkManager:
-chunk_size = 128.0   # Larger chunks = fewer draw calls
-render_distance = 2  # Smaller = less memory, more pop-in
-```
-
-For higher quality:
-```gdscript
-chunk_size = 32.0    # Smaller chunks = smoother LOD transitions
-render_distance = 5  # More chunks = smoother experience
-```
-
-## Interior Spaces (Buildings)
-
-Buildings require special handling for true open-world:
-
-### Approach 1: Separate Interior Scenes
-1. Create building scene with interior geometry
-2. Use a "door" area that teleports player to interior coordinates
-3. Interior has its own smaller chunk system (optional)
-
-### Approach 2: Sub-chunk Interiors
-1. Buildings occupy a specific chunk region
-2. Interior geometry replaces exterior when player enters
-3. Requires chunk refresh on door entry
-
-### Transition Points
-```gdscript
-func _on_door_entered(building_scene: PackedScene, interior_pos: Vector3):
-    # Save exterior position
-    exterior_save_pos = player.global_position
-    
-    # Teleport to interior
-    player.global_position = interior_pos
-    
-    # Load building interior
+# In TerrainChunk.gd or a building manager
+func place_building_at(chunk_pos: Vector2i, building_scene: PackedScene) -> void:
     var building = building_scene.instantiate()
+    var chunk_center = chunk_manager.get_chunk_world_position(chunk_pos)
+    building.position = chunk_center + Vector3(0, 0, 0)  # Offset as needed
     add_child(building)
 ```
 
+**Requirements for building chunks:**
+- Mark chunk as "building chunk" in metadata
+- Keep building chunks always loaded (render_distance = 0 won't work)
+- Use larger render_distance in building areas
+
+### Method 2: Fixed Interior Scenes (Recommended for Dens/Caves)
+
+For interiors (houses, caves, dungeons):
+
+1. **Create separate interior scenes** (e.g., `res://scenes/interiors/House.tscn`)
+2. **Teleport player** to interior scene when entering doorway
+3. **Use scene transitions** (not chunk streaming) for interiors
+
+```gdscript
+# Entry point script
+func _on_door_entered():
+    # Save world position
+    var exit_position = global_position
+    
+    # Switch to interior scene
+    get_tree().change_scene_to_file("res://scenes/interiors/House.tscn")
+    
+    # Position player at interior entrance
+    player.global_position = Vector3(0, 1, 5)
+```
+
+### Method 3: Mixed Approach
+
+Use chunk streaming for exterior terrain and fixed scenes for buildings:
+
+- **Exterior**: Chunk-based streaming
+- **Building interiors**: Separate scenes loaded on demand
+- **Building exteriors**: Can use chunk system with decoration pass
+
+## API Reference
+
+### ChunkManager
+
+```gdscript
+# Get singleton instance
+var cm = ChunkManager.get_instance()
+
+# Convert world position to chunk coordinates
+var chunk_pos = cm.get_chunk_coordinates(player.global_position)
+
+# Get chunk world center position
+var chunk_center = cm.get_chunk_world_position(chunk_pos)
+
+# Check if chunk is loaded
+var is_loaded = cm.is_chunk_loaded(chunk_pos)
+
+# Get all active chunks
+var active = cm.get_active_chunks()
+
+# Change settings at runtime
+cm.set_render_distance(3)
+```
+
+### TerrainChunk
+
+```gdscript
+# Access chunk properties
+var chunk = active_chunks[chunk_pos]
+var pos = chunk.get_chunk_position()
+var size = chunk.get_chunk_size()
+```
+
+## Future Improvements
+
+1. **LOD System**: Implement multi-resolution meshes based on distance
+2. **Async Loading**: Use `await` for smooth chunk transitions
+3. **Preloading**: Load adjacent chunks before player arrives
+4. **Terrain Noise**: Use FastNoiseLite for better terrain generation
+5. **Chunk Persistence**: Save/load chunk state for multiplayer
+6. **Streaming Groups**: Different groups for terrain, buildings, props
+
+## Debug Mode
+
+Enable debug logging in `chunk_manager.gd`:
+
+```gdscript
+@export var is_debug_mode: bool = true
+```
+
+This will log:
+- Chunk load/unload events
+- Player chunk transitions
+- Active chunk count
+
 ## Troubleshooting
 
-### Chunks Not Loading
-- Check that `chunk_scene` is assigned in ChunkManager
-- Verify player_path points to the correct player node
-- Check Output console for error messages
+### Chunks not loading
+- Check `chunk_manager` reference in player
+- Ensure player is in "player" group
+- Verify `is_debug_mode` for errors
 
-### Player Falls Through Ground
-- Ensure collision_layer and collision_mask are correct
-- Verify TerrainChunk creates collision (check mesh generation)
-- Try increasing `subdivisions` in terrain generation
-
-### Performance Issues
+### Performance issues
 - Reduce `render_distance`
-- Increase `chunk_size`
-- Disable collision for distant chunks (advanced)
+- Increase `update_interval`
+- Use larger `chunk_size`
 
-## File Structure
-
-```
-athena-saga/
-├── scripts/
-│   ├── chunk_manager.gd      # Chunk streaming system
-│   ├── terrain_chunk.gd      # Individual chunk generation
-│   └── player.gd             # Updated for chunk reporting
-├── scenes/
-│   ├── main.tscn             # Main scene with ChunkManager
-│   └── terrain_chunk.tscn    # Terrain chunk scene template
-├── assets/
-│   ├── models/               # Building/prop models
-│   └── textures/             # Terrain textures
-└── docs/
-    └── OPENWORLD.md          # This documentation
+### Player falls through terrain
+- Check collision shapes are generated
+- Verify `chunk_size` matches terrain generation

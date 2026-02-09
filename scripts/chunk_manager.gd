@@ -125,7 +125,7 @@ func load_chunk(chunk_pos: Vector2i) -> void:
 	# Create chunk container
 	var container = Node3D.new()
 	container.name = "Chunk_%d_%d" % [chunk_pos.x, chunk_pos.y]
-	container.position = get_chunk_world_position(Vector3(chunk_pos.x, 0, chunk_pos.y))
+	container.position = get_chunk_world_position(chunk_pos)
 	add_child(container)
 	chunk_containers[chunk_pos] = container
 	
@@ -194,7 +194,7 @@ static func get_instance() -> ChunkManager:
 
 func get_nearest_chunk_center(world_pos: Vector3) -> Vector3:
 	var chunk = get_chunk_coordinates(world_pos)
-	return get_chunk_world_position(Vector3(chunk.x, 0, chunk.y))
+	return get_chunk_world_position(chunk)
 
 func set_render_distance(distance: int) -> void:
 	render_distance = distance

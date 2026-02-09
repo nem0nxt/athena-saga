@@ -166,6 +166,8 @@ func setup_character_model() -> void:
 	if default_body:
 		default_body.visible = false
 	
+	# NOTE: SamanthaCharacter.tscn must be created in Godot
+	# Right-click samantha.fbx -> New Inherited Scene -> Save as SamanthaCharacter.tscn
 	var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
 	var samantha = samantha_scene.instantiate()
 	$MeshPivot.add_child(samantha)

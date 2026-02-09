@@ -1,164 +1,140 @@
 extends StaticBody3D
 class_name TerrainChunk
 
-## Terrain Chunk - Procedural Terrain Generation
-## Generates simple terrain mesh for open world chunks
+## TerrainChunk - Procedural terrain chunk for open world
+## Generates a simple terrain mesh and handles LOD (basic implementation)
 
-# Chunk configuration
+signal chunk_loaded(chunk_position: Vector2i)
+signal chunk_unloaded(chunk_position: Vector2i)
+
+# Chunk grid position
 var chunk_pos: Vector2i = Vector2i.ZERO
-var chunk_size: float = 64.0
 
-# Terrain settings
-@export var height_scale: float = 10.0
-@export var noise_scale: float = 0.05
-@export var material: StandardMaterial3D
+# Configuration
+var chunk_size: float = 50.0
+var terrain_height: float = 2.0
+var noise_offset: Vector2 = Vector2.ZERO
+
+# LOD support (optional)
+var use_lod: bool = false
+var lod_distance: float = 100.0
+var current_lod: int = 0
 
 # Mesh resources
 var mesh_instance: MeshInstance3D
 var collision_shape: CollisionShape3D
 
-# LOD support (simple version)
-enum LODLevel { HIGH, MEDIUM, LOW }
-var current_lod: LODLevel = LODLevel.HIGH
+# Materials
+var grass_material: StandardMaterial3D
 
 func _ready() -> void:
-	_create_terrain()
-	_create_collision()
+	setup_materials()
+	generate_terrain()
+	chunk_loaded.emit(chunk_pos)
+	print("Chunk loaded: ", chunk_pos)
 
-func set_chunk_position(pos: Vector2i, size: float) -> void:
+func setup_materials() -> void:
+	# Create grass material
+	grass_material = StandardMaterial3D.new()
+	grass_material.albedo_color = Color(0.3, 0.5, 0.25, 1)
+	grass_material.roughness = 0.9
+
+func initialize(pos: Vector2i, size: float, seed_offset: Vector2 = Vector2.ZERO) -> void:
 	chunk_pos = pos
 	chunk_size = size
-	global_position = Vector3(pos.x * size, 0, pos.y * size)
+	noise_offset = seed_offset
 
-func _create_terrain() -> void:
+func generate_terrain() -> void:
+	# Create a simple terrain mesh using SurfaceTool
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(grass_material)
+	
+	var half_size = chunk_size / 2.0
+	var segments = 10  # Low poly for now
+	
+	# Generate vertices
+	for z in range(segments + 1):
+		for x in range(segments + 1):
+			var x_pos = (x / float(segments)) * chunk_size - half_size
+			var z_pos = (z / float(segments)) * chunk_size - half_size
+			
+			# Simple height calculation using noise-like math
+			var height = get_height_at(x_pos, z_pos)
+			
+			# UV coordinates
+			st.set_uv(Vector2(x / float(segments), z / float(segments)))
+			st.add_vertex(Vector3(x_pos, height, z_pos))
+	
+	# Generate indices for triangles
+	for z in range(segments):
+		for x in range(segments):
+			var top_left = z * (segments + 1) + x
+			var top_right = top_left + 1
+			var bottom_left = (z + 1) * (segments + 1) + x
+			var bottom_right = bottom_left + 1
+			
+			# Two triangles per quad
+			st.add_index(top_left)
+			st.add_index(bottom_left)
+			st.add_index(top_right)
+			
+			st.add_index(top_right)
+			st.add_index(bottom_left)
+			st.add_index(bottom_right)
+	
+	st.generate_normals()
 	mesh_instance = MeshInstance3D.new()
+	mesh_instance.mesh = st.commit()
 	add_child(mesh_instance)
 	
-	# Create material if not assigned
-	if not material:
-		material = StandardMaterial3D.new()
-		material.albedo_color = Color(0.3, 0.5, 0.25)  # Green grass color
-		material.roughness = 0.9
-	
-	mesh_instance.material_override = material
-	
-	# Generate procedural terrain mesh
-	var surface_tool = SurfaceTool.new()
-	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	# Simple flat terrain with slight variation
-	var subdivisions = 16
-	var step = chunk_size / subdivisions
-	var height_map = _generate_height_map(subdivisions + 1)
-	
-	for z in range(subdivisions):
-		for x in range(subdivisions):
-			_add_quad(surface_tool, x, z, step, height_map)
-	
-	mesh_instance.mesh = surface_tool.commit()
+	# Create collision
+	create_collision()
 
-func _generate_height_map(size: int) -> Array:
-	var height_map: Array = []
-	var noise = FastNoiseLite.new()
-	noise.seed = chunk_pos.x * 1000 + chunk_pos.y
-	noise.frequency = noise_scale
-	noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+func get_height_at(x: float, z: float) -> float:
+	# Simple procedural height using sine waves (noise substitute)
+	var height = 0.0
 	
-	for z in range(size):
-		var row: Array = []
-		for x in range(size):
-			# Get world position for noise
-			var world_x = chunk_pos.x * chunk_size + x * (chunk_size / size)
-			var world_z = chunk_pos.y * chunk_size + z * (chunk_size / size)
-			
-			var height = noise.get_noise_2d(world_x, world_z) * height_scale
-			row.append(height)
-		height_map.append(row)
+	# Large features
+	height += sin((x + noise_offset.x) * 0.05) * 2.0
+	height += cos((z + noise_offset.y) * 0.05) * 2.0
 	
-	return height_map
+	# Small features
+	height += sin((x + noise_offset.x) * 0.1) * 0.5
+	height += cos((z + noise_offset.y) * 0.1) * 0.5
+	
+	return height
 
-func _add_quad(st: SurfaceTool, x: int, z: int, step: float, height_map: Array) -> void:
-	var size = height_map.size()
-	
-	# Get heights for the 4 corners
-	var h00 = _get_height(height_map, x, z, size)
-	var h10 = _get_height(height_map, x + 1, z, size)
-	var h01 = _get_height(height_map, x, z + 1, size)
-	var h11 = _get_height(height_map, x + 1, z + 1, size)
-	
-	# World positions
-	var v00 = Vector3(x * step, h00, z * step)
-	var v10 = Vector3((x + 1) * step, h10, z * step)
-	var v01 = Vector3(x * step, h01, (z + 1) * step)
-	var v11 = Vector3((x + 1) * step, h11, (z + 1) * step)
-	
-	# UV coordinates
-	var uv00 = Vector2(float(x) / size, float(z) / size)
-	var uv10 = Vector2(float(x + 1) / size, float(z) / size)
-	var uv01 = Vector2(float(x) / size, float(z + 1) / size)
-	var uv11 = Vector2(float(x + 1) / size, float(z + 1) / size)
-	
-	# First triangle
-	st.set_normal(Vector3.UP)
-	st.set_uv(uv00)
-	st.add_vertex(v00)
-	st.set_normal(Vector3.UP)
-	st.set_uv(uv10)
-	st.add_vertex(v10)
-	st.set_normal(Vector3.UP)
-	st.set_uv(uv01)
-	st.add_vertex(v01)
-	
-	# Second triangle
-	st.set_normal(Vector3.UP)
-	st.set_uv(uv10)
-	st.add_vertex(v10)
-	st.set_normal(Vector3.UP)
-	st.set_uv(uv11)
-	st.add_vertex(v11)
-	st.set_normal(Vector3.UP)
-	st.set_uv(uv01)
-	st.add_vertex(v01)
-
-func _get_height(height_map: Array, x: int, z: int, size: int) -> float:
-	x = clamp(x, 0, size - 1)
-	z = clamp(z, 0, size - 1)
-	return height_map[z][x]
-
-func _create_collision() -> void:
+func create_collision() -> void:
+	# Create collision shape matching the mesh
 	collision_shape = CollisionShape3D.new()
+	var box_shape = BoxShape3D.new()
+	box_shape.size = Vector3(chunk_size, terrain_height, chunk_size)
+	collision_shape.shape = box_shape
+	collision_shape.position.y = -terrain_height / 2.0
 	add_child(collision_shape)
-	
-	# Use the generated mesh for collision
-	if mesh_instance and mesh_instance.mesh:
-		var shape = mesh_instance.mesh.create_trimesh_shape()
-		collision_shape.shape = shape
 
-func set_lod(level: LODLevel) -> void:
-	if level == current_lod:
+func set_lod(distance: float) -> void:
+	# Optional LOD implementation
+	if not use_lod:
 		return
 	
-	current_lod = level
+	if distance < lod_distance * 0.5:
+		current_lod = 0  # High detail
+	elif distance < lod_distance:
+		current_lod = 1  # Medium detail
+	else:
+		current_lod = 2  # Low detail
 	
-	# Adjust detail based on LOD
-	match level:
-		LODLevel.HIGH:
-			_create_terrain()  # Full detail
-		LODLevel.MEDIUM:
-			_create_terrain()  # Same for now
-		LODLevel.LOW:
-			_create_terrain()  # Could be simplified
+	# Could switch meshes here based on LOD
 
-## Add a building/interior to this chunk
-func add_building(building_scene: PackedScene, local_pos: Vector3) -> void:
-	var building = building_scene.instantiate()
-	add_child(building)
-	building.global_position = global_position + local_pos
-	print("[TerrainChunk] Added building at %s" % str(global_position + local_pos))
+func _exit_tree() -> void:
+	chunk_unloaded.emit(chunk_pos)
+	print("Chunk unloaded: ", chunk_pos)
 
-## Add a prop/object to this chunk
-func add_prop(prop_scene: PackedScene, local_pos: Vector3, rotation: float = 0.0) -> void:
-	var prop = prop_scene.instantiate()
-	add_child(prop)
-	prop.global_position = global_position + local_pos
-	prop.rotation.y = rotation
+# Public API for chunk management
+func get_chunk_position() -> Vector2i:
+	return chunk_pos
+
+func get_chunk_size() -> float:
+	return chunk_size
