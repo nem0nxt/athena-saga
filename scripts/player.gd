@@ -191,9 +191,17 @@ func die() -> void:
 	print("Player died!")
 
 func play_animation(anim_name: String) -> void:
-	if animation_player and animation_player.has_animation(anim_name):
+	if not animation_player:
+		print("ERROR: No AnimationPlayer found!")
+		return
+	
+	if animation_player.has_animation(anim_name):
 		if animation_player.current_animation != anim_name:
 			animation_player.play(anim_name)
+	else:
+		# Debug: show available animations
+		print("Animation '", anim_name, "' not found!")
+		print("Available: ", animation_player.get_animation_list())
 
 func setup_character_model() -> void:
 	# Hide the default capsule
@@ -206,6 +214,18 @@ func setup_character_model() -> void:
 	var samantha = samantha_scene.instantiate()
 	$MeshPivot.add_child(samantha)
 	
-	# Connect AnimationPlayer from Samantha
-	if samantha.has_node("AnimationPlayer"):
-		animation_player = samantha.get_node("AnimationPlayer")
+	# Connect AnimationPlayer from Samantha - search recursively
+	animation_player = _find_animation_player(samantha)
+
+func _find_animation_player(node: Node) -> AnimationPlayer:
+	# First check if this node is an AnimationPlayer
+	if node is AnimationPlayer:
+		return node
+	
+	# Search children recursively
+	for child in node.get_children():
+		var result = _find_animation_player(child)
+		if result:
+			return result
+	
+	return null
