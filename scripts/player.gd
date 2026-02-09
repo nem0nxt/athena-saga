@@ -22,16 +22,16 @@ var health: float = 100.0
 var max_health: float = 100.0
 var is_attacking: bool = false
 
-# Samantha Animation Mapping
-const ANIM_IDLE = "Idle"
-const ANIM_WALK = "Walk"
-const ANIM_RUN = "Run"
+# Samantha Animation Mapping (match actual animation names)
+const ANIM_IDLE = "combat_idle"
+const ANIM_WALK = "combat_walk"
+const ANIM_RUN = "combat_run"
 const ANIM_STRAFE_LEFT = "Strafe_Left"
 const ANIM_STRAFE_RIGHT = "Strafe_Right"
 const ANIM_JUMP_START = "Jump_Start"
 const ANIM_JUMP_LOOP = "Jump_Loop"
 const ANIM_JUMP_END = "Jump_End"
-const ANIM_ATTACK = "Attack_Combo"
+const ANIM_ATTACK = "attack"
 const ANIM_TAKE_DAMAGE = "Take_Damage"
 const ANIM_DEATH = "Death"
 
