@@ -154,15 +154,13 @@ func play_animation(anim_name: String) -> void:
 func setup_character_model() -> void:
 	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
 	if default_body:
-		default_body.visible = false
+		default_body.visible = true  # Show default capsule
 	
-	# NOTE: SamanthaCharacter.tscn must be created in Godot
-	# Right-click samantha.fbx -> New Inherited Scene -> Save as SamanthaCharacter.tscn
-	var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
-	var samantha = samantha_scene.instantiate()
-	$MeshPivot.add_child(samantha)
-	
-	animation_player = _find_animation_player(samantha)
+	# NOTE: Uncomment when SamanthaCharacter.tscn is ready
+	# var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
+	# var samantha = samantha_scene.instantiate()
+	# $MeshPivot.add_child(samantha)
+	# animation_player = _find_animation_player(samantha)
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
