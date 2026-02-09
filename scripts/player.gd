@@ -1,6 +1,7 @@
 extends CharacterBody3D
 
-const SimpleCharacter = preload("res://scripts/simple_character.gd")
+# Samantha Character - loaded dynamically
+# var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
 
 # Movement
 const SPEED = 7.0
@@ -136,19 +137,11 @@ func setup_character_model() -> void:
 	if default_body:
 		default_body.visible = false
 	
-	# For now using simple character - replace with Samantha after import
-	# TODO: After importing samantha.fbx in Godot:
-	# 1. Create inherited scene from samantha.fbx
-	# 2. Save as res://scenes/SamanthaCharacter.tscn
-	# 3. Uncomment below and remove simple character
+	# Load Samantha character
+	var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
+	var samantha = samantha_scene.instantiate()
+	$MeshPivot.add_child(samantha)
 	
-	# var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
-	# var samantha = samantha_scene.instantiate()
-	# $MeshPivot.add_child(samantha)
-	# # Connect AnimationPlayer if exists
-	# if samantha.has_node("AnimationPlayer"):
-	#     animation_player = samantha.get_node("AnimationPlayer")
-	
-	# Temporary simple character
-	var athena = SimpleCharacter.create_simple_athena()
-	$MeshPivot.add_child(athena)
+	# Connect AnimationPlayer from Samantha
+	if samantha.has_node("AnimationPlayer"):
+		animation_player = samantha.get_node("AnimationPlayer")
