@@ -106,18 +106,8 @@ func report_position_to_chunk_manager() -> void:
 		last_chunk_reported = current_chunk
 
 func connect_to_chunk_manager() -> void:
-	var chunk_manager_node = get_tree().get_first_node_in_group("chunk_manager")
-	
-	if chunk_manager_node:
-		chunk_manager = chunk_manager_node
-		add_to_group("player")
-	elif ChunkManager.get_instance():
-		chunk_manager = ChunkManager.get_instance()
-		add_to_group("player")
-	else:
-		chunk_manager = get_node_or_null("../ChunkManager")
-		if chunk_manager:
-			add_to_group("player")
+	# ChunkManager is optional - game works without it
+	chunk_manager = get_node_or_null("../ChunkManager")
 
 func attack() -> void:
 	is_attacking = true
