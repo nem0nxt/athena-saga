@@ -3,6 +3,9 @@ extends CharacterBody3D
 # Samantha Character - loaded dynamically
 # var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
 
+# Chunk Manager reference for open world
+var chunk_manager: Node3D = null
+
 # Movement
 const SPEED = 7.0
 const JUMP_VELOCITY = 5.5
@@ -28,6 +31,9 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	setup_character_model()
+	
+	# Find ChunkManager for open world
+	chunk_manager = get_tree().get_first_node_in_group("chunk_managers")
 
 func _input(event: InputEvent) -> void:
 	# Camera rotation with mouse
