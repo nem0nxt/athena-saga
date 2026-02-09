@@ -48,7 +48,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	instance = null
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if not player:
 		find_player()
 		return
