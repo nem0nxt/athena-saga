@@ -79,7 +79,8 @@ func _physics_process(delta: float) -> void:
 		
 		if is_on_floor() and not is_attacking:
 			if direction.length() > 0.5:
-				var forward_dot = abs(direction.dot(Vector3.FORWARD))
+				var forward_dir = Vector3(0, 0, -1)
+				var forward_dot = abs(direction.dot(forward_dir))
 				if forward_dot > 0.7:
 					play_animation(ANIM_RUN)
 				else:
