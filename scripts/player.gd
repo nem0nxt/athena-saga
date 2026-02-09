@@ -3,9 +3,6 @@ extends CharacterBody3D
 # Samantha Character - loaded dynamically
 # var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
 
-# Chunk Manager reference for open world
-var chunk_manager: Node3D = null
-
 # Movement
 const SPEED = 7.0
 const JUMP_VELOCITY = 5.5
@@ -25,15 +22,26 @@ var health: float = 100.0
 var max_health: float = 100.0
 var is_attacking: bool = false
 
+# Samantha Animation Mapping
+const ANIM_IDLE = "Idle"
+const ANIM_WALK = "Walk"
+const ANIM_RUN = "Run"
+const ANIM_JUMP_START = "Jump_Start"
+const ANIM_JUMP_LOOP = "Jump_Loop"
+const ANIM_JUMP_END = "Jump_End"
+const ANIM_ATTACK = "attack"
+
+# Chunk Manager integration
+var chunk_manager = null
+var last_chunk_reported: Vector2i = Vector2i(999999, 999999)  # Force initial report
+
 # Get the gravity from the project settings
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	setup_character_model()
-	
-	# Find ChunkManager for open world
-	chunk_manager = get_tree().get_first_node_in_group("chunk_managers")
+	connect_to_chunk_manager()
 
 func _input(event: InputEvent) -> void:
 	# Camera rotation with mouse
@@ -78,27 +86,62 @@ func _physics_process(delta: float) -> void:
 		
 		# Animation
 		if is_on_floor() and not is_attacking:
-			play_animation("run")
+			if direction.length() > 0.5:
+				play_animation(ANIM_RUN)
+			else:
+				play_animation(ANIM_IDLE)
 	else:
 		velocity.x = lerp(velocity.x, 0.0, FRICTION * delta)
 		velocity.z = lerp(velocity.z, 0.0, FRICTION * delta)
-		
-		# Idle animation
-		if is_on_floor() and not is_attacking:
-			play_animation("idle")
 	
 	# Jump/Fall animation
 	if not is_on_floor() and not is_attacking:
 		if velocity.y > 0:
-			play_animation("jump")
+			play_animation(ANIM_JUMP_START)
 		else:
-			play_animation("fall")
+			play_animation(ANIM_JUMP_LOOP)
 	
 	move_and_slide()
+	
+	# Report position to ChunkManager
+	report_position_to_chunk_manager()
+
+func report_position_to_chunk_manager() -> void:
+	# Find ChunkManager if not connected
+	if not chunk_manager:
+		connect_to_chunk_manager()
+		return
+	
+	# Get current chunk from player position
+	var current_chunk = chunk_manager.get_chunk_coordinates(global_position)
+	
+	# Only report when entering a new chunk
+	if current_chunk != last_chunk_reported:
+		last_chunk_reported = current_chunk
+		# ChunkManager's update_chunks() will be called in its _process
+		# This is enough to trigger chunk streaming
+
+func connect_to_chunk_manager() -> void:
+	# Try to find ChunkManager in the scene
+	var chunk_manager_node = get_tree().get_first_node_in_group("chunk_manager")
+	
+	if chunk_manager_node:
+		chunk_manager = chunk_manager_node
+		add_to_group("player")  # Make player discoverable
+		print("Connected to ChunkManager")
+	elif ChunkManager.get_instance():
+		chunk_manager = ChunkManager.get_instance()
+		add_to_group("player")
+		print("Connected to ChunkManager (singleton)")
+	else:
+		# Try to get by path (common location)
+		chunk_manager = get_node_or_null("../ChunkManager")
+		if chunk_manager:
+			add_to_group("player")
 
 func attack() -> void:
 	is_attacking = true
-	play_animation("attack")
+	play_animation(ANIM_ATTACK)
 	
 	# Hitbox check after small delay
 	await get_tree().create_timer(0.2).timeout
