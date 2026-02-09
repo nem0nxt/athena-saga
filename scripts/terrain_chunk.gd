@@ -48,7 +48,6 @@ func generate_terrain() -> void:
 	# Create a simple terrain mesh using SurfaceTool
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_material(grass_material)
 	
 	var half_size = chunk_size / 2.0
 	var segments = 10  # Low poly for now
@@ -86,6 +85,7 @@ func generate_terrain() -> void:
 	st.generate_normals()
 	mesh_instance = MeshInstance3D.new()
 	mesh_instance.mesh = st.commit()
+	mesh_instance.material_override = grass_material
 	add_child(mesh_instance)
 	
 	# Create collision
