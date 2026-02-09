@@ -19,7 +19,7 @@ var health: float = 100.0
 var max_health: float = 100.0
 var is_attacking: bool = false
 
-# Samantha Animation Mapping (match actual animation names)
+# Samantha Animation Mapping
 const ANIM_IDLE = "combat_idle"
 const ANIM_WALK = "combat_walk"
 const ANIM_RUN = "combat_run"
@@ -79,15 +79,7 @@ func _physics_process(delta: float) -> void:
 		
 		if is_on_floor() and not is_attacking:
 			if direction.length() > 0.5:
-				var forward_dir = Vector3(0, 0, -1)
-				var forward_dot = abs(direction.dot(forward_dir))
-				if forward_dot > 0.7:
-					play_animation(ANIM_RUN)
-				else:
-					if direction.x > 0:
-						play_animation(ANIM_STRAFE_RIGHT)
-					else:
-						play_animation(ANIM_STRAFE_LEFT)
+				play_animation(ANIM_RUN)
 			else:
 				play_animation(ANIM_IDLE)
 	else:
