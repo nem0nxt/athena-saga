@@ -1,0 +1,74 @@
+[gd_scene load_steps=2 format=3 uid="uid://heart_ui"]
+
+[ext_resource type="Script" path="res://scripts/ui_heart_system.gd" id="1_ui"]
+
+[node name="HeartSystemUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HeartContainer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -80.0
+offset_top = -140.0
+offset_right = 80.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="HeartShape" type="Polygon2D" parent="HeartContainer"]
+position = Vector2(0, 10)
+color = Color(0.85, 0.2, 0.3, 1.0)
+
+[node name="HeartOutline" type="Line2D" parent="HeartContainer"]
+position = Vector2(0, 10)
+width = 2.0
+default_color = Color(0.4, 0.1, 0.15, 1.0)
+
+[node name="Arteries" type="Node2D" parent="HeartContainer"]
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -180.0
+offset_right = -20.0
+offset_bottom = -160.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="HealthFill" type="ColorRect" parent="HealthBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.9, 0.1, 0.1, 1.0)
+
+[node name="BPMLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -200.0
+offset_right = 150.0
+offset_bottom = -185.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "♥ 80 BPM"
