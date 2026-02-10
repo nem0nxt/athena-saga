@@ -6,12 +6,13 @@ class_name HeartSystemUI
 
 # References
 @onready var heart_container: Control = $HeartContainer
-@onready var heart_shape: Polygon2D = $HeartContainer/HeartShape
-@onready var heart_outline: Line2D = $HeartContainer/HeartOutline
 @onready var arteries: Node2D = $HeartContainer/Arteries
 @onready var health_bar: ProgressBar = $HealthBar
 @onready var health_fill: ColorRect = $HealthBar/HealthFill
 @onready var bpm_label: Label = $BPMLabel
+
+# Heart shape will be accessed directly
+var heart_shape: Polygon2D = null
 
 # Heart rate system
 var current_bpm: float = 80.0
@@ -34,6 +35,8 @@ func _ready() -> void:
 	call_deferred("_setup_ui")
 
 func _setup_ui() -> void:
+	# Get heart_shape node directly
+	heart_shape = $HeartContainer/HeartShape
 	_draw_anatomical_heart()
 	setup_health_bar()
 	update_bpm_display()
@@ -73,6 +76,13 @@ func _draw_anatomical_heart() -> void:
 	
 	heart_shape.polygon = heart_points
 	heart_shape.color = HEART_COLOR
+	
+	# Draw outline
+	var outline = Line2D.new()
+	outline.points = heart_points
+	outline.width = 2.0
+	outline.default_color = Color(0.4, 0.1, 0.15, 1.0)
+	heart_shape.add_child(outline)
 	
 	# Draw arteries/vessels
 	_draw_arteries()
