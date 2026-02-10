@@ -160,9 +160,18 @@ func play_animation(anim_name: String) -> void:
 	if not animation_player:
 		return
 	
+	# Don't interrupt if same animation is already playing
+	if animation_player.current_animation == anim_name:
+		return
+	
 	if animation_player.has_animation(anim_name):
-		if animation_player.current_animation != anim_name:
-			animation_player.play(anim_name)
+		animation_player.play(anim_name)
+		print("Playing: ", anim_name)
+	else:
+		# Try fallback to idle
+		if anim_name != "Breathing_Idle" and animation_player.has_animation("Breathing_Idle"):
+			print("Animation '", anim_name, "' not found, using Breathing_Idle")
+			animation_player.play("Breathing_Idle")
 
 func setup_character_model() -> void:
 	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
@@ -174,13 +183,21 @@ func setup_character_model() -> void:
 	var samantha = samantha_scene.instantiate()
 	$MeshPivot.add_child(samantha)
 	
-	# Connect AnimationPlayer from Samantha
-	animation_player = _find_animation_player(samantha)
+	# Try to find AnimationPlayer in Samantha
+	var anim_player = samantha.get_node_or_null("AnimationPlayer")
+	if not anim_player:
+		# Search recursively
+		anim_player = _find_animation_player(samantha)
 	
-	if animation_player:
+	if anim_player:
+		animation_player = anim_player
 		print("Found AnimationPlayer: ", animation_player.name)
+		# Play idle immediately
+		if animation_player.has_animation("Breathing_Idle"):
+			animation_player.play("Breathing_Idle")
 	else:
-		print("ERROR: Could not find AnimationPlayer in Samantha!")
+		print("ERROR: No AnimationPlayer found!")
+		default_body.visible = true
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
