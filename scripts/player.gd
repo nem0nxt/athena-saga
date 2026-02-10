@@ -23,15 +23,18 @@ var is_attacking: bool = false
 var heart_ui: Control = null
 var base_bpm: float = 80.0
 
-# Samantha Animation Mapping
-const ANIM_IDLE = "combat_idle"
-const ANIM_WALK = "combat_walk"
-const ANIM_RUN = "combat_run"
-const ANIM_ATTACK = "attack"
-const ANIM_TAKE_DAMAGE = "Take_Damage"
-const ANIM_DEATH = "Death"
-const ANIM_JUMP_START = "Jump_Start"
-const ANIM_JUMP_LOOP = "Jump_Loop"
+# Samantha Animation Mapping (match actual animation names)
+const ANIM_IDLE = "Breathing_Idle"
+const ANIM_WALK = "great_sword_walk"
+const ANIM_RUN = "Run_Forward"
+const ANIM_STRAFE_LEFT = "Left_Strafe"
+const ANIM_STRAFE_RIGHT = "Right_Strafe"
+const ANIM_JUMP_START = "great_sword_jump"
+const ANIM_JUMP_LOOP = "great_sword_jump2"
+const ANIM_JUMP_END = "great_sword_jump"
+const ANIM_ATTACK = "great_sword_attack"
+const ANIM_TAKE_DAMAGE = "great_sword_impact"
+const ANIM_DEATH = "two_handed_sword_death"
 
 # Get the gravity from the project settings
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
