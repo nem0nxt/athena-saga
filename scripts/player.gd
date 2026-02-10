@@ -164,7 +164,15 @@ func play_animation(anim_name: String) -> void:
 func setup_character_model() -> void:
 	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
 	if default_body:
-		default_body.visible = true
+		default_body.visible = false
+	
+	# Load Samantha character
+	var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
+	var samantha = samantha_scene.instantiate()
+	$MeshPivot.add_child(samantha)
+	
+	# Connect AnimationPlayer from Samantha
+	animation_player = _find_animation_player(samantha)
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
