@@ -155,11 +155,17 @@ func die() -> void:
 
 func play_animation(anim_name: String) -> void:
 	if not animation_player:
+		print("ERROR: No AnimationPlayer found!")
 		return
 	
 	if animation_player.has_animation(anim_name):
 		if animation_player.current_animation != anim_name:
 			animation_player.play(anim_name)
+			print("Playing animation: ", anim_name)
+	else:
+		print("Animation '", anim_name, "' not found!")
+		var anims = animation_player.get_animation_list()
+		print("Available animations: ", anims)
 
 func setup_character_model() -> void:
 	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
@@ -173,6 +179,11 @@ func setup_character_model() -> void:
 	
 	# Connect AnimationPlayer from Samantha
 	animation_player = _find_animation_player(samantha)
+	
+	if animation_player:
+		print("Found AnimationPlayer: ", animation_player.name)
+	else:
+		print("ERROR: Could not find AnimationPlayer in Samantha!")
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
