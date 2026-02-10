@@ -31,6 +31,9 @@ var DANGER_COLOR: Color = Color(1.0, 0.2, 0.2, 1.0)  # Κίνδυνος
 
 func _ready() -> void:
 	add_to_group("heart_ui")
+	call_deferred("_setup_ui")
+
+func _setup_ui() -> void:
 	_draw_anatomical_heart()
 	setup_health_bar()
 	update_bpm_display()
