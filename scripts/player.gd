@@ -23,18 +23,18 @@ var is_attacking: bool = false
 var heart_ui: Control = null
 var base_bpm: float = 80.0
 
-# Samantha Animation Mapping (match actual animation names)
+# Samantha Animation Mapping (match actual animation names - simple animations)
 const ANIM_IDLE = "Breathing_Idle"
-const ANIM_WALK = "great_sword_walk"
+const ANIM_WALK = "Walking_Backwards"
 const ANIM_RUN = "Run_Forward"
 const ANIM_STRAFE_LEFT = "Left_Strafe"
 const ANIM_STRAFE_RIGHT = "Right_Strafe"
-const ANIM_JUMP_START = "great_sword_jump"
-const ANIM_JUMP_LOOP = "great_sword_jump2"
-const ANIM_JUMP_END = "great_sword_jump"
-const ANIM_ATTACK = "great_sword_attack"
-const ANIM_TAKE_DAMAGE = "great_sword_impact"
-const ANIM_DEATH = "two_handed_sword_death"
+# Jump, Attack, Damage, Death - use simple animations or idle
+const ANIM_JUMP_START = "Breathing_Idle"
+const ANIM_JUMP_LOOP = "Breathing_Idle"
+const ANIM_ATTACK = "Breathing_Idle"
+const ANIM_TAKE_DAMAGE = "Breathing_Idle"
+const ANIM_DEATH = "Breathing_Idle"
 
 # Get the gravity from the project settings
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -158,17 +158,11 @@ func die() -> void:
 
 func play_animation(anim_name: String) -> void:
 	if not animation_player:
-		print("ERROR: No AnimationPlayer found!")
 		return
 	
 	if animation_player.has_animation(anim_name):
 		if animation_player.current_animation != anim_name:
 			animation_player.play(anim_name)
-			print("Playing animation: ", anim_name)
-	else:
-		print("Animation '", anim_name, "' not found!")
-		var anims = animation_player.get_animation_list()
-		print("Available animations: ", anims)
 
 func setup_character_model() -> void:
 	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
