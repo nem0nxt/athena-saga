@@ -19,6 +19,12 @@ var health: float = 100.0
 var max_health: float = 100.0
 var is_attacking: bool = false
 
+# Heart Rate System
+var heart_ui: Control = null
+var base_bpm: float = 80.0
+var current_bpm: float = 80.0
+var heart_health: float = 100.0
+
 # Samantha Animation Mapping
 const ANIM_IDLE = "combat_idle"
 const ANIM_WALK = "combat_walk"
@@ -31,10 +37,6 @@ const ANIM_JUMP_END = "Jump_End"
 const ANIM_ATTACK = "attack"
 const ANIM_TAKE_DAMAGE = "Take_Damage"
 const ANIM_DEATH = "Death"
-
-# Chunk Manager integration
-var chunk_manager = null
-var last_chunk_reported: Vector2i = Vector2i(999999, 999999)
 
 # Get the gravity from the project settings
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -59,12 +61,23 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("attack") and not is_attacking:
 		attack()
 
+func _ready() -> void:
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	setup_character_model()
+	
+	# Find Heart UI
+	heart_ui = get_tree().get_first_node_in_group("heart_ui")
+	if heart_ui:
+		heart_ui.set_bpm(base_bpm)
+		heart_ui.take_heart_damage(0)  # Initialize health
+
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
+		_on_running()  # Jump increases BPM
 	
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction := (camera_pivot.global_transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
@@ -80,11 +93,14 @@ func _physics_process(delta: float) -> void:
 		if is_on_floor() and not is_attacking:
 			if direction.length() > 0.5:
 				play_animation(ANIM_RUN)
+				_on_running()  # Running increases BPM
 			else:
 				play_animation(ANIM_IDLE)
+				_on_idle()  # Idle decreases BPM
 	else:
 		velocity.x = lerp(velocity.x, 0.0, FRICTION * delta)
 		velocity.z = lerp(velocity.z, 0.0, FRICTION * delta)
+		_on_idle()
 	
 	if not is_on_floor() and not is_attacking:
 		if velocity.y > 0:
@@ -92,8 +108,38 @@ func _physics_process(delta: float) -> void:
 		else:
 			play_animation(ANIM_JUMP_LOOP)
 	
+	_check_heart_attack()
+	
 	move_and_slide()
-	report_position_to_chunk_manager()
+
+func _on_running() -> void:
+	if heart_ui:
+		# Running increases BPM based on speed
+		var speed_modifier = velocity.length() / SPEED
+		var target_bpm = base_bpm + (40.0 * speed_modifier)
+		heart_ui.set_bpm(target_bpm)
+
+func _on_idle() -> void:
+	if heart_ui:
+		# Idle gradually decreases BPM
+		heart_ui.reduce_bpm(30.0 * get_physics_process_delta_time())
+
+func _check_heart_attack() -> void:
+	if heart_ui and heart_ui.is_dangerous_bpm():
+		# Warning: high BPM danger
+		pass  # Could add screen effects here
+
+func take_damage(amount: float) -> void:
+	health -= amount
+	play_animation(ANIM_TAKE_DAMAGE)
+	
+	# Taking damage increases BPM temporarily
+	if heart_ui:
+		heart_ui.add_bpm(20.0)
+	
+	if health <= 0:
+		await get_tree().create_timer(0.5).timeout
+		die()
 
 func report_position_to_chunk_manager() -> void:
 	if not chunk_manager:

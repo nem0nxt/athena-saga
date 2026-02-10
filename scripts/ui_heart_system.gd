@@ -30,6 +30,7 @@ var BLOOD_COLOR: Color = Color(0.9, 0.1, 0.1, 1.0)  # Σκούρο κόκκιν�
 var DANGER_COLOR: Color = Color(1.0, 0.2, 0.2, 1.0)  # Κίνδυνος
 
 func _ready() -> void:
+	add_to_group("heart_ui")
 	_draw_anatomical_heart()
 	setup_health_bar()
 	update_bpm_display()
