@@ -189,15 +189,20 @@ func setup_character_model() -> void:
 		# Search recursively
 		anim_player = _find_animation_player(samantha)
 	
-	if anim_player:
+	if anim_player and anim_player.get_animation_count() > 0:
 		animation_player = anim_player
 		print("Found AnimationPlayer: ", animation_player.name)
+		print("Animations: ", animation_player.get_animation_list())
 		# Play idle immediately
 		if animation_player.has_animation("Breathing_Idle"):
 			animation_player.play("Breathing_Idle")
 	else:
-		print("ERROR: No AnimationPlayer found!")
-		default_body.visible = true
+		print("ERROR: No AnimationPlayer with animations found!")
+		# Debug: list all nodes
+		print("Searching for AnimationPlayer...")
+		var all_anim_players = _find_all_animation_players(samantha)
+		for ap in all_anim_players:
+			print("  Found: ", ap.name, " with ", ap.get_animation_count(), " animations")
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
@@ -209,3 +214,13 @@ func _find_animation_player(node: Node) -> AnimationPlayer:
 			return result
 	
 	return null
+
+func _find_all_animation_players(node: Node) -> Array:
+	var result: Array = []
+	if node is AnimationPlayer:
+		result.append(node)
+	
+	for child in node.get_children():
+		result.append_array(_find_all_animation_players(child))
+	
+	return result
