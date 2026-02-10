@@ -22,21 +22,16 @@ var is_attacking: bool = false
 # Heart Rate System
 var heart_ui: Control = null
 var base_bpm: float = 80.0
-var current_bpm: float = 80.0
-var heart_health: float = 100.0
 
 # Samantha Animation Mapping
 const ANIM_IDLE = "combat_idle"
 const ANIM_WALK = "combat_walk"
 const ANIM_RUN = "combat_run"
-const ANIM_STRAFE_LEFT = "Strafe_Left"
-const ANIM_STRAFE_RIGHT = "Strafe_Right"
-const ANIM_JUMP_START = "Jump_Start"
-const ANIM_JUMP_LOOP = "Jump_Loop"
-const ANIM_JUMP_END = "Jump_End"
 const ANIM_ATTACK = "attack"
 const ANIM_TAKE_DAMAGE = "Take_Damage"
 const ANIM_DEATH = "Death"
+const ANIM_JUMP_START = "Jump_Start"
+const ANIM_JUMP_LOOP = "Jump_Loop"
 
 # Get the gravity from the project settings
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -44,7 +39,12 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	setup_character_model()
-	connect_to_chunk_manager()
+	
+	# Find Heart UI
+	heart_ui = get_tree().get_first_node_in_group("heart_ui")
+	if heart_ui:
+		heart_ui.set_bpm(base_bpm)
+		heart_ui.take_heart_damage(0)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
@@ -61,23 +61,13 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("attack") and not is_attacking:
 		attack()
 
-func _ready() -> void:
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	setup_character_model()
-	
-	# Find Heart UI
-	heart_ui = get_tree().get_first_node_in_group("heart_ui")
-	if heart_ui:
-		heart_ui.set_bpm(base_bpm)
-		heart_ui.take_heart_damage(0)  # Initialize health
-
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
-		_on_running()  # Jump increases BPM
+		_on_running()
 	
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction := (camera_pivot.global_transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
@@ -93,10 +83,10 @@ func _physics_process(delta: float) -> void:
 		if is_on_floor() and not is_attacking:
 			if direction.length() > 0.5:
 				play_animation(ANIM_RUN)
-				_on_running()  # Running increases BPM
+				_on_running()
 			else:
 				play_animation(ANIM_IDLE)
-				_on_idle()  # Idle decreases BPM
+				_on_idle()
 	else:
 		velocity.x = lerp(velocity.x, 0.0, FRICTION * delta)
 		velocity.z = lerp(velocity.z, 0.0, FRICTION * delta)
@@ -109,51 +99,21 @@ func _physics_process(delta: float) -> void:
 			play_animation(ANIM_JUMP_LOOP)
 	
 	_check_heart_attack()
-	
 	move_and_slide()
 
 func _on_running() -> void:
 	if heart_ui:
-		# Running increases BPM based on speed
 		var speed_modifier = velocity.length() / SPEED
 		var target_bpm = base_bpm + (40.0 * speed_modifier)
 		heart_ui.set_bpm(target_bpm)
 
 func _on_idle() -> void:
 	if heart_ui:
-		# Idle gradually decreases BPM
 		heart_ui.reduce_bpm(30.0 * get_physics_process_delta_time())
 
 func _check_heart_attack() -> void:
 	if heart_ui and heart_ui.is_dangerous_bpm():
-		# Warning: high BPM danger
-		pass  # Could add screen effects here
-
-func take_damage(amount: float) -> void:
-	health -= amount
-	play_animation(ANIM_TAKE_DAMAGE)
-	
-	# Taking damage increases BPM temporarily
-	if heart_ui:
-		heart_ui.add_bpm(20.0)
-	
-	if health <= 0:
-		await get_tree().create_timer(0.5).timeout
-		die()
-
-func report_position_to_chunk_manager() -> void:
-	if not chunk_manager:
-		connect_to_chunk_manager()
-		return
-	
-	var current_chunk = chunk_manager.get_chunk_coordinates(global_position)
-	
-	if current_chunk != last_chunk_reported:
-		last_chunk_reported = current_chunk
-
-func connect_to_chunk_manager() -> void:
-	# ChunkManager is optional - game works without it
-	chunk_manager = get_node_or_null("../ChunkManager")
+		pass
 
 func attack() -> void:
 	is_attacking = true
@@ -182,6 +142,10 @@ func check_attack_hit() -> void:
 func take_damage(amount: float) -> void:
 	health -= amount
 	play_animation(ANIM_TAKE_DAMAGE)
+	
+	if heart_ui:
+		heart_ui.add_bpm(20.0)
+	
 	if health <= 0:
 		await get_tree().create_timer(0.5).timeout
 		die()
@@ -200,13 +164,7 @@ func play_animation(anim_name: String) -> void:
 func setup_character_model() -> void:
 	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
 	if default_body:
-		default_body.visible = true  # Show default capsule
-	
-	# NOTE: Uncomment when SamanthaCharacter.tscn is ready
-	# var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
-	# var samantha = samantha_scene.instantiate()
-	# $MeshPivot.add_child(samantha)
-	# animation_player = _find_animation_player(samantha)
+		default_body.visible = true
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
