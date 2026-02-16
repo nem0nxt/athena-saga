@@ -23,18 +23,21 @@ var is_attacking: bool = false
 var heart_ui: Control = null
 var base_bpm: float = 80.0
 
-# Meshy Animation Mapping (best-guess names; will fallback to first available)
-const ANIM_IDLE = "Long_Breathe_and_Look_Around_withSkin"
-const ANIM_WALK = "Walking_withSkin"
-const ANIM_RUN = "Running_withSkin"
-const ANIM_STRAFE_LEFT = "Walking_withSkin"
-const ANIM_STRAFE_RIGHT = "Walking_withSkin"
+# Animation fallback name
+var _fallback_anim: String = ""
+
+# Meshy Animation Mapping (single-clip for now; fallback set at runtime)
+const ANIM_IDLE = "Animation"
+const ANIM_WALK = "Animation"
+const ANIM_RUN = "Animation"
+const ANIM_STRAFE_LEFT = "Animation"
+const ANIM_STRAFE_RIGHT = "Animation"
 # Jump, Attack, Damage, Death - use idle fallback
-const ANIM_JUMP_START = "Long_Breathe_and_Look_Around_withSkin"
-const ANIM_JUMP_LOOP = "Long_Breathe_and_Look_Around_withSkin"
-const ANIM_ATTACK = "Long_Breathe_and_Look_Around_withSkin"
-const ANIM_TAKE_DAMAGE = "Long_Breathe_and_Look_Around_withSkin"
-const ANIM_DEATH = "Long_Breathe_and_Look_Around_withSkin"
+const ANIM_JUMP_START = "Animation"
+const ANIM_JUMP_LOOP = "Animation"
+const ANIM_ATTACK = "Animation"
+const ANIM_TAKE_DAMAGE = "Animation"
+const ANIM_DEATH = "Animation"
 
 # Get the gravity from the project settings
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -168,15 +171,12 @@ func play_animation(anim_name: String) -> void:
 	
 	if animation_player.has_animation(anim_name):
 		animation_player.play(anim_name)
-		print("Playing: ", anim_name)
 	else:
-		# Fallback to idle or first available
+		# Fallback to idle or first available (no spam)
 		if animation_player.has_animation(ANIM_IDLE):
-			print("Animation '", anim_name, "' not found, using idle")
 			animation_player.play(ANIM_IDLE)
-		elif animation_player.get_animation_list().size() > 0:
-			print("Animation '", anim_name, "' not found, using first animation")
-			animation_player.play(animation_player.get_animation_list()[0])
+		elif _fallback_anim != "":
+			animation_player.play(_fallback_anim)
 
 func setup_character_model() -> void:
 	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
@@ -195,13 +195,14 @@ func setup_character_model() -> void:
 	
 	if anim_player and anim_player.get_animation_list().size() > 0:
 		animation_player = anim_player
-		print("Found AnimationPlayer with ", animation_player.get_animation_list().size(), " animations")
+		var anims = animation_player.get_animation_list()
+		_fallback_anim = anims[0]
+		print("Found AnimationPlayer with ", anims.size(), " animations: ", anims)
 		# Play idle immediately
 		if animation_player.has_animation(ANIM_IDLE):
 			animation_player.play(ANIM_IDLE)
 		else:
-			# fallback to first animation
-			animation_player.play(animation_player.get_animation_list()[0])
+			animation_player.play(_fallback_anim)
 	else:
 		print("ERROR: No AnimationPlayer with animations!")
 		default_body.visible = true
