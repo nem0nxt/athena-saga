@@ -25,19 +25,25 @@ var base_bpm: float = 80.0
 
 # Animation fallback name
 var _fallback_anim: String = ""
+var _current_anim_state: String = ""
 
-# Meshy Animation Mapping (single-clip for now; fallback set at runtime)
-const ANIM_IDLE = "Animation"
-const ANIM_WALK = "Animation"
-const ANIM_RUN = "Animation"
-const ANIM_STRAFE_LEFT = "Animation"
-const ANIM_STRAFE_RIGHT = "Animation"
+# Animated Meshy scenes
+const SCENE_MESHY_IDLE = preload("res://scenes/MeshyIdle.tscn")
+const SCENE_MESHY_WALK = preload("res://scenes/MeshyWalk.tscn")
+const SCENE_MESHY_RUN = preload("res://scenes/MeshyRun.tscn")
+
+# Animation states (using separate animated GLBs)
+const ANIM_IDLE = "Idle"
+const ANIM_WALK = "Walk"
+const ANIM_RUN = "Run"
+const ANIM_STRAFE_LEFT = "Walk"
+const ANIM_STRAFE_RIGHT = "Walk"
 # Jump, Attack, Damage, Death - use idle fallback
-const ANIM_JUMP_START = "Animation"
-const ANIM_JUMP_LOOP = "Animation"
-const ANIM_ATTACK = "Animation"
-const ANIM_TAKE_DAMAGE = "Animation"
-const ANIM_DEATH = "Animation"
+const ANIM_JUMP_START = "Idle"
+const ANIM_JUMP_LOOP = "Idle"
+const ANIM_ATTACK = "Idle"
+const ANIM_TAKE_DAMAGE = "Idle"
+const ANIM_DEATH = "Idle"
 
 # Get the gravity from the project settings
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -88,23 +94,22 @@ func _physics_process(delta: float) -> void:
 		
 		if is_on_floor() and not is_attacking:
 			if direction.length() > 0.5:
-				# Force run animation
-				if animation_player.has_animation(ANIM_RUN):
-					animation_player.play(ANIM_RUN)
+				_switch_character_state(ANIM_RUN)
 				_on_running()
 			else:
-				play_animation(ANIM_IDLE)
-				_on_idle()
+				_switch_character_state(ANIM_WALK)
+				_on_running()
 	else:
 		velocity.x = lerp(velocity.x, 0.0, FRICTION * delta)
 		velocity.z = lerp(velocity.z, 0.0, FRICTION * delta)
+		_switch_character_state(ANIM_IDLE)
 		_on_idle()
 	
 	if not is_on_floor() and not is_attacking:
 		if velocity.y > 0:
-			play_animation(ANIM_JUMP_START)
+			_switch_character_state(ANIM_IDLE)
 		else:
-			play_animation(ANIM_JUMP_LOOP)
+			_switch_character_state(ANIM_IDLE)
 	
 	_check_heart_attack()
 	move_and_slide()
@@ -178,33 +183,47 @@ func play_animation(anim_name: String) -> void:
 		elif _fallback_anim != "":
 			animation_player.play(_fallback_anim)
 
-func setup_character_model() -> void:
-	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
-	if default_body:
-		default_body.visible = false
+func _switch_character_state(state: String, force: bool = false) -> void:
+	if not force and _current_anim_state == state:
+		return
 	
-	# Load Meshy character
-	var meshy_scene = preload("res://scenes/MeshyCharacter.tscn")
-	var meshy = meshy_scene.instantiate()
-	$MeshPivot.add_child(meshy)
+	_current_anim_state = state
 	
-	# Try to find AnimationPlayer in Meshy
-	var anim_player = meshy.get_node_or_null("AnimationPlayer")
+	# Clear existing character instance
+	for child in $MeshPivot.get_children():
+		child.queue_free()
+	
+	var scene: PackedScene = SCENE_MESHY_IDLE
+	if state == ANIM_RUN:
+		scene = SCENE_MESHY_RUN
+	elif state == ANIM_WALK:
+		scene = SCENE_MESHY_WALK
+	else:
+		scene = SCENE_MESHY_IDLE
+	
+	var instance = scene.instantiate()
+	$MeshPivot.add_child(instance)
+	
+	# Try to find AnimationPlayer in instance
+	var anim_player = instance.get_node_or_null("AnimationPlayer")
 	if not anim_player:
-		anim_player = _find_animation_player(meshy)
+		anim_player = _find_animation_player(instance)
 	
 	if anim_player and anim_player.get_animation_list().size() > 0:
 		animation_player = anim_player
 		var anims = animation_player.get_animation_list()
 		_fallback_anim = anims[0]
-		print("Found AnimationPlayer with ", anims.size(), " animations: ", anims)
-		# Play idle immediately
-		if animation_player.has_animation(ANIM_IDLE):
-			animation_player.play(ANIM_IDLE)
-		else:
-			animation_player.play(_fallback_anim)
+		# Play first animation
+		animation_player.play(_fallback_anim)
 	else:
 		print("ERROR: No AnimationPlayer with animations!")
+
+func setup_character_model() -> void:
+	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
+	if default_body:
+		default_body.visible = false
+	
+	_switch_character_state(ANIM_IDLE, true)
 		default_body.visible = true
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
