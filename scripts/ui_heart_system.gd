@@ -82,14 +82,15 @@ func _create_ui_elements() -> void:
 	# Camera
 	var cam = Camera3D.new()
 	cam.position = Vector3(0, 0.0, 1.5)
-	cam.look_at(Vector3(0, 0, 0), Vector3.UP)
 	heart_root.add_child(cam)
+	# Defer look_at until nodes are in tree
+	cam.call_deferred("look_at", Vector3(0, 0, 0), Vector3.UP)
 
 	# Light
 	var light = DirectionalLight3D.new()
 	light.position = Vector3(1.5, 2.0, 2.0)
-	light.look_at(Vector3(0, 0, 0), Vector3.UP)
 	heart_root.add_child(light)
+	light.call_deferred("look_at", Vector3(0, 0, 0), Vector3.UP)
 
 	# Heart model
 	var heart_scene = preload("res://scenes/Heart3D.tscn")
