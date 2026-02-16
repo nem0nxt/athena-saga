@@ -224,7 +224,6 @@ func setup_character_model() -> void:
 		default_body.visible = false
 	
 	_switch_character_state(ANIM_IDLE, true)
-		default_body.visible = true
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
