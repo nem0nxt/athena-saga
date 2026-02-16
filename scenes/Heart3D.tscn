@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://heart_3d"]
 
-[ext_resource type="PackedScene" uid="uid://heart_fbx" path="res://beating-heart-v004a-animated.fbx" id="1_heart"]
+[ext_resource type="PackedScene" uid="uid://heart_fbx" path="res://assets/models/beating-heart-v004a-animated.fbx" id="1_heart"]
 
 [node name="Heart3D" type="Node3D"]
 
