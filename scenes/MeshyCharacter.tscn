@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://meshy_character"]
+
+[ext_resource type="PackedScene" uid="uid://meshy_character_scene" path="res://assets/models/Meshy_AI_biped/Meshy_AI_Character_output.glb" id="1_meshy"]
+
+[node name="meshy_character" instance=ExtResource("1_meshy")]

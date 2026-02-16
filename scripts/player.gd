@@ -23,18 +23,18 @@ var is_attacking: bool = false
 var heart_ui: Control = null
 var base_bpm: float = 80.0
 
-# Samantha Animation Mapping (match actual animation names - simple animations)
-const ANIM_IDLE = "Breathing_Idle"
-const ANIM_WALK = "Walking_Backwards"
-const ANIM_RUN = "Run_Forward"
-const ANIM_STRAFE_LEFT = "Left_Strafe"
-const ANIM_STRAFE_RIGHT = "Right_Strafe"
-# Jump, Attack, Damage, Death - use simple animations or idle
-const ANIM_JUMP_START = "Breathing_Idle"
-const ANIM_JUMP_LOOP = "Breathing_Idle"
-const ANIM_ATTACK = "Breathing_Idle"
-const ANIM_TAKE_DAMAGE = "Breathing_Idle"
-const ANIM_DEATH = "Breathing_Idle"
+# Meshy Animation Mapping (best-guess names; will fallback to first available)
+const ANIM_IDLE = "Long_Breathe_and_Look_Around_withSkin"
+const ANIM_WALK = "Walking_withSkin"
+const ANIM_RUN = "Running_withSkin"
+const ANIM_STRAFE_LEFT = "Walking_withSkin"
+const ANIM_STRAFE_RIGHT = "Walking_withSkin"
+# Jump, Attack, Damage, Death - use idle fallback
+const ANIM_JUMP_START = "Long_Breathe_and_Look_Around_withSkin"
+const ANIM_JUMP_LOOP = "Long_Breathe_and_Look_Around_withSkin"
+const ANIM_ATTACK = "Long_Breathe_and_Look_Around_withSkin"
+const ANIM_TAKE_DAMAGE = "Long_Breathe_and_Look_Around_withSkin"
+const ANIM_DEATH = "Long_Breathe_and_Look_Around_withSkin"
 
 # Get the gravity from the project settings
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -85,7 +85,9 @@ func _physics_process(delta: float) -> void:
 		
 		if is_on_floor() and not is_attacking:
 			if direction.length() > 0.5:
-				play_animation(ANIM_RUN)
+				# Force run animation
+				if animation_player.has_animation(ANIM_RUN):
+					animation_player.play(ANIM_RUN)
 				_on_running()
 			else:
 				play_animation(ANIM_IDLE)
@@ -168,32 +170,38 @@ func play_animation(anim_name: String) -> void:
 		animation_player.play(anim_name)
 		print("Playing: ", anim_name)
 	else:
-		# Try fallback to idle
-		if anim_name != "Breathing_Idle" and animation_player.has_animation("Breathing_Idle"):
-			print("Animation '", anim_name, "' not found, using Breathing_Idle")
-			animation_player.play("Breathing_Idle")
+		# Fallback to idle or first available
+		if animation_player.has_animation(ANIM_IDLE):
+			print("Animation '", anim_name, "' not found, using idle")
+			animation_player.play(ANIM_IDLE)
+		elif animation_player.get_animation_list().size() > 0:
+			print("Animation '", anim_name, "' not found, using first animation")
+			animation_player.play(animation_player.get_animation_list()[0])
 
 func setup_character_model() -> void:
 	var default_body = $MeshPivot.get_child(0) if $MeshPivot.get_child_count() > 0 else null
 	if default_body:
 		default_body.visible = false
 	
-	# Load Samantha character
-	var samantha_scene = preload("res://scenes/SamanthaCharacter.tscn")
-	var samantha = samantha_scene.instantiate()
-	$MeshPivot.add_child(samantha)
+	# Load Meshy character
+	var meshy_scene = preload("res://scenes/MeshyCharacter.tscn")
+	var meshy = meshy_scene.instantiate()
+	$MeshPivot.add_child(meshy)
 	
-	# Try to find AnimationPlayer in Samantha
-	var anim_player = samantha.get_node_or_null("AnimationPlayer")
+	# Try to find AnimationPlayer in Meshy
+	var anim_player = meshy.get_node_or_null("AnimationPlayer")
 	if not anim_player:
-		anim_player = _find_animation_player(samantha)
+		anim_player = _find_animation_player(meshy)
 	
 	if anim_player and anim_player.get_animation_list().size() > 0:
 		animation_player = anim_player
 		print("Found AnimationPlayer with ", animation_player.get_animation_list().size(), " animations")
 		# Play idle immediately
-		if animation_player.has_animation("Breathing_Idle"):
-			animation_player.play("Breathing_Idle")
+		if animation_player.has_animation(ANIM_IDLE):
+			animation_player.play(ANIM_IDLE)
+		else:
+			# fallback to first animation
+			animation_player.play(animation_player.get_animation_list()[0])
 	else:
 		print("ERROR: No AnimationPlayer with animations!")
 		default_body.visible = true

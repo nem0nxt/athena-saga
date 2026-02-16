@@ -1,5 +1,0 @@
-[gd_scene format=3 uid="uid://c6up43w3uq8mq"]
-
-[ext_resource type="PackedScene" uid="uid://djkum5koipdcm" path="res://assets/models/samantha.fbx" id="1_2ount"]
-
-[node name="samantha" unique_id=908960899 instance=ExtResource("1_2ount")]
