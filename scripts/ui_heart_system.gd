@@ -5,9 +5,8 @@ class_name HeartSystemUI
 # Position: Bottom-left
 
 # References (created in code)
-var heart_shape: Polygon2D = null
-var heart_outline: Line2D = null
-var arteries_container: Node2D = null
+var heart_3d: Node3D = null
+var heart_viewport: SubViewport = null
 var health_bar: ProgressBar = null
 var health_fill: ColorRect = null
 var bpm_label: Label = null
@@ -49,8 +48,8 @@ func _process(delta: float) -> void:
 	# Animate heart scale
 	beat_scale = lerp(beat_scale, 1.0, delta * 8.0)
 	
-	if heart_shape:
-		heart_shape.scale = Vector2(beat_scale, beat_scale)
+	if heart_3d:
+		heart_3d.scale = Vector3(beat_scale, beat_scale, beat_scale)
 	
 	# Update UI
 	_update_bpm_display()
@@ -63,41 +62,39 @@ func _create_ui_elements() -> void:
 	container.size = Vector2(160, 130)
 	add_child(container)
 	
-	# Create anatomical heart (left side view)
-	heart_shape = Polygon2D.new()
-	var heart_points = PackedVector2Array([
-		Vector2(80, 120),   # Bottom tip
-		Vector2(110, 90),   # Right side
-		Vector2(120, 60),   # Upper right
-		Vector2(95, 35),    # Top
-		Vector2(65, 45),    # Upper left (aorta area)
-		Vector2(50, 70),    # Left side
-		Vector2(80, 120),   # Back to bottom
-	])
-	heart_shape.polygon = heart_points
-	heart_shape.color = HEART_COLOR
-	container.add_child(heart_shape)
-	
-	# Create outline
-	heart_outline = Line2D.new()
-	heart_outline.points = heart_points
-	heart_outline.width = 2.0
-	heart_outline.default_color = Color(0.4, 0.1, 0.15, 1.0)
-	container.add_child(heart_outline)
-	
-	# Create aorta
-	var aorta = Line2D.new()
-	aorta.points = [Vector2(75, 35), Vector2(75, 15), Vector2(100, 5)]
-	aorta.width = 5.0
-	aorta.default_color = HEART_COLOR
-	container.add_child(aorta)
-	
-	# Create vena cava
-	var vena_cava = Line2D.new()
-	vena_cava.points = [Vector2(55, 70), Vector2(45, 50)]
-	vena_cava.width = 4.0
-	vena_cava.default_color = Color(0.6, 0.1, 0.2, 1.0)
-	container.add_child(vena_cava)
+	# 3D animated heart via SubViewport
+	var vp_container = SubViewportContainer.new()
+	vp_container.size = Vector2(160, 130)
+	container.add_child(vp_container)
+
+	heart_viewport = SubViewport.new()
+	heart_viewport.size = Vector2i(160, 130)
+	heart_viewport.transparent_bg = true
+	vp_container.add_child(heart_viewport)
+
+	# Scene root for 3D
+	var root = Node3D.new()
+	heart_viewport.add_child(root)
+
+	# Camera
+	var cam = Camera3D.new()
+	cam.position = Vector3(0, 0.2, 2.2)
+	cam.look_at(Vector3(0, 0, 0), Vector3.UP)
+	root.add_child(cam)
+
+	# Light
+	var light = DirectionalLight3D.new()
+	light.position = Vector3(1.5, 2.0, 2.0)
+	light.look_at(Vector3(0, 0, 0), Vector3.UP)
+	root.add_child(light)
+
+	# Heart model
+	var heart_scene = preload("res://scenes/Heart3D.tscn")
+	heart_3d = heart_scene.instantiate()
+	root.add_child(heart_3d)
+	# Adjust scale/orientation for UI
+	heart_3d.scale = Vector3(0.6, 0.6, 0.6)
+	heart_3d.rotation = Vector3(0.0, -0.6, 0.0)
 	
 	# BPM Label
 	bpm_label = Label.new()
