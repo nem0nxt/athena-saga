@@ -66,11 +66,13 @@ func _create_ui_elements() -> void:
 	# 3D animated heart via SubViewport
 	var vp_container = SubViewportContainer.new()
 	vp_container.size = Vector2(160, 130)
+	vp_container.stretch = true
 	container.add_child(vp_container)
 
 	heart_viewport = SubViewport.new()
 	heart_viewport.size = Vector2i(160, 130)
 	heart_viewport.transparent_bg = true
+	heart_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	vp_container.add_child(heart_viewport)
 
 	# Scene root for 3D
@@ -79,7 +81,7 @@ func _create_ui_elements() -> void:
 
 	# Camera
 	var cam = Camera3D.new()
-	cam.position = Vector3(0, 0.2, 2.2)
+	cam.position = Vector3(0, 0.0, 1.5)
 	cam.look_at(Vector3(0, 0, 0), Vector3.UP)
 	heart_root.add_child(cam)
 
@@ -95,8 +97,8 @@ func _create_ui_elements() -> void:
 	if heart_3d:
 		heart_root.add_child(heart_3d)
 		# Adjust scale/orientation for UI
-		heart_3d.scale = Vector3(0.6, 0.6, 0.6)
-		heart_3d.rotation = Vector3(0.0, -0.6, 0.0)
+		heart_3d.scale = Vector3(0.35, 0.35, 0.35)
+		heart_3d.rotation = Vector3(0.0, 0.0, 0.0)
 	
 	# BPM Label
 	bpm_label = Label.new()
