@@ -7,6 +7,7 @@ class_name HeartSystemUI
 # References (created in code)
 var heart_3d: Node3D = null
 var heart_viewport: SubViewport = null
+var heart_root: Node3D = null
 var health_bar: ProgressBar = null
 var health_fill: ColorRect = null
 var bpm_label: Label = null
@@ -48,8 +49,8 @@ func _process(delta: float) -> void:
 	# Animate heart scale
 	beat_scale = lerp(beat_scale, 1.0, delta * 8.0)
 	
-	if heart_3d:
-		heart_3d.scale = Vector3(beat_scale, beat_scale, beat_scale)
+	if heart_root:
+		heart_root.scale = Vector3(beat_scale, beat_scale, beat_scale)
 	
 	# Update UI
 	_update_bpm_display()
@@ -73,25 +74,25 @@ func _create_ui_elements() -> void:
 	vp_container.add_child(heart_viewport)
 
 	# Scene root for 3D
-	var root = Node3D.new()
-	heart_viewport.add_child(root)
+	heart_root = Node3D.new()
+	heart_viewport.add_child(heart_root)
 
 	# Camera
 	var cam = Camera3D.new()
 	cam.position = Vector3(0, 0.2, 2.2)
 	cam.look_at(Vector3(0, 0, 0), Vector3.UP)
-	root.add_child(cam)
+	heart_root.add_child(cam)
 
 	# Light
 	var light = DirectionalLight3D.new()
 	light.position = Vector3(1.5, 2.0, 2.0)
 	light.look_at(Vector3(0, 0, 0), Vector3.UP)
-	root.add_child(light)
+	heart_root.add_child(light)
 
 	# Heart model
 	var heart_scene = preload("res://scenes/Heart3D.tscn")
 	heart_3d = heart_scene.instantiate()
-	root.add_child(heart_3d)
+	heart_root.add_child(heart_3d)
 	# Adjust scale/orientation for UI
 	heart_3d.scale = Vector3(0.6, 0.6, 0.6)
 	heart_3d.rotation = Vector3(0.0, -0.6, 0.0)
