@@ -81,7 +81,8 @@ func _create_ui_elements() -> void:
 
 	# Camera
 	var cam = Camera3D.new()
-	cam.position = Vector3(0, 0.0, 1.5)
+	cam.position = Vector3(0, 0.0, 3.0)
+	cam.fov = 35.0
 	heart_root.add_child(cam)
 	# Defer look_at until nodes are in tree
 	cam.call_deferred("look_at", Vector3(0, 0, 0), Vector3.UP)
@@ -98,8 +99,8 @@ func _create_ui_elements() -> void:
 	if heart_3d:
 		heart_root.add_child(heart_3d)
 		# Adjust scale/orientation for UI
-		heart_3d.scale = Vector3(0.35, 0.35, 0.35)
-		heart_3d.rotation = Vector3(0.0, 0.0, 0.0)
+		heart_3d.scale = Vector3(0.2, 0.2, 0.2)
+		heart_3d.rotation = Vector3(0.0, 0.3, 0.0)
 	
 	# BPM Label
 	bpm_label = Label.new()
