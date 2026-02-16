@@ -92,10 +92,11 @@ func _create_ui_elements() -> void:
 	# Heart model
 	var heart_scene = preload("res://scenes/Heart3D.tscn")
 	heart_3d = heart_scene.instantiate()
-	heart_root.add_child(heart_3d)
-	# Adjust scale/orientation for UI
-	heart_3d.scale = Vector3(0.6, 0.6, 0.6)
-	heart_3d.rotation = Vector3(0.0, -0.6, 0.0)
+	if heart_3d:
+		heart_root.add_child(heart_3d)
+		# Adjust scale/orientation for UI
+		heart_3d.scale = Vector3(0.6, 0.6, 0.6)
+		heart_3d.rotation = Vector3(0.0, -0.6, 0.0)
 	
 	# BPM Label
 	bpm_label = Label.new()
