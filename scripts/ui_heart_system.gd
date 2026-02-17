@@ -11,6 +11,7 @@ var heart_root: Node3D = null
 var health_bar: ProgressBar = null
 var health_fill: ColorRect = null
 var bpm_label: Label = null
+var heartbeat_player: AudioStreamPlayer = null
 
 # Heart rate system
 var current_bpm: float = 80.0
@@ -32,6 +33,7 @@ func _ready() -> void:
 
 func _setup_ui() -> void:
 	_create_ui_elements()
+	_setup_heartbeat_sound()
 	_update_bpm_display()
 
 func _process(delta: float) -> void:
@@ -129,8 +131,23 @@ func _create_ui_elements() -> void:
 	
 	container.add_child(health_bar)
 
+func _setup_heartbeat_sound() -> void:
+	heartbeat_player = AudioStreamPlayer.new()
+	heartbeat_player.bus = &"Master"
+	var stream = load("res://assets/audio/heartbeat.wav") as AudioStream
+	if stream:
+		heartbeat_player.stream = stream
+		add_child(heartbeat_player)
+	else:
+		push_warning("Heartbeat sound not found: res://assets/audio/heartbeat.wav")
+
 func _beat() -> void:
 	beat_scale = 1.15 + (current_bpm / 200.0) * 0.1
+	# Sync 3D heart animation with sound (restart at beat)
+	if heart_3d and heart_3d.has_method("sync_to_beat"):
+		heart_3d.sync_to_beat()
+	if heartbeat_player and heartbeat_player.stream:
+		heartbeat_player.play()
 
 func _update_bpm_display() -> void:
 	if bpm_label:

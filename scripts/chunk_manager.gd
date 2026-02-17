@@ -17,7 +17,7 @@ static var instance: ChunkManager
 
 # References
 var player: Node3D
-var chunk_scene: PackedScene
+var chunk_script: Script  # TerrainChunk script (used with set_script on StaticBody3D)
 
 # Chunk storage
 var active_chunks: Dictionary = {}  # Vector2i -> TerrainChunk
@@ -37,8 +37,8 @@ func _ready() -> void:
 	instance = self
 	add_to_group("chunk_manager")
 	
-	# Load terrain chunk scene or use script directly
-	chunk_scene = load("res://scripts/terrain_chunk.gd")
+	# Load terrain chunk script (applied to StaticBody3D in load_chunk)
+	chunk_script = load("res://scripts/terrain_chunk.gd") as Script
 	
 	if is_debug_mode:
 		print("ChunkManager initialized")
@@ -81,8 +81,8 @@ func update_chunks() -> void:
 	var player_pos = player.global_position
 	var new_chunk = get_chunk_coordinates(player_pos)
 	
-	# Only update if player moved to a different chunk
-	if new_chunk == current_chunk:
+	# Only update if player moved to a different chunk (or initial load when no chunks exist)
+	if new_chunk == current_chunk and active_chunks.size() > 0:
 		return
 	
 	current_chunk = new_chunk
@@ -131,7 +131,7 @@ func load_chunk(chunk_pos: Vector2i) -> void:
 	
 	# Create chunk using script directly (not a scene for simplicity)
 	var chunk = StaticBody3D.new()
-	chunk.set_script(chunk_scene)
+	chunk.set_script(chunk_script)
 	chunk.name = "TerrainChunk"
 	
 	# Calculate noise offset based on chunk position for consistent terrain

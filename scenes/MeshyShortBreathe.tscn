@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://meshy_short_breathe"]
+
+[ext_resource type="PackedScene" uid="uid://h835tsmuk2n6" path="res://assets/models/Meshy_AI_biped/Meshy_AI_Animation_Short_Breathe_and_Look_Around_withSkin.glb" id="1_short"]
+
+[node name="meshy_short_breathe" instance=ExtResource("1_short")]

@@ -12,7 +12,7 @@ var chunk_pos: Vector2i = Vector2i.ZERO
 
 # Configuration
 var chunk_size: float = 50.0
-var terrain_height: float = 2.0
+var terrain_height: float = 10.0  # Must cover mesh height range (~-5 to +5 from get_height_at)
 var noise_offset: Vector2 = Vector2.ZERO
 
 # LOD support (optional)
@@ -111,7 +111,7 @@ func create_collision() -> void:
 	var box_shape = BoxShape3D.new()
 	box_shape.size = Vector3(chunk_size, terrain_height, chunk_size)
 	collision_shape.shape = box_shape
-	collision_shape.position.y = -terrain_height / 2.0
+	collision_shape.position.y = 0.0  # Center at y=0 to match mesh height range
 	add_child(collision_shape)
 
 func set_lod(distance: float) -> void:

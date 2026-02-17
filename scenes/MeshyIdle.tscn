@@ -1,5 +1,5 @@
 [gd_scene format=3 uid="uid://meshy_idle"]
 
-[ext_resource type="PackedScene" uid="uid://meshy_idle_scene" path="res://assets/models/Meshy_AI_biped/Meshy_AI_Animation_Long_Breathe_and_Look_Around_withSkin.glb" id="1_idle"]
+[ext_resource type="PackedScene" uid="uid://cm0v3m07r5tn2" path="res://assets/models/Meshy_AI_biped/Meshy_AI_Animation_Long_Breathe_and_Look_Around_withSkin.glb" id="1_idle"]
 
 [node name="meshy_idle" instance=ExtResource("1_idle")]

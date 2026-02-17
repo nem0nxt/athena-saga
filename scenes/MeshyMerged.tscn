@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://meshy_merged"]
+
+[ext_resource type="PackedScene" path="res://assets/models/Meshy_AI_biped/Meshy_AI_Character_AllAnimations.glb" id="1_merged"]
+
+[node name="MeshyMerged" instance=ExtResource("1_merged")]

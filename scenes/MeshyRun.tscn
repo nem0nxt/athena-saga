@@ -1,5 +1,5 @@
 [gd_scene format=3 uid="uid://meshy_run"]
 
-[ext_resource type="PackedScene" uid="uid://meshy_run_scene" path="res://assets/models/Meshy_AI_biped/Meshy_AI_Animation_Running_withSkin.glb" id="1_run"]
+[ext_resource type="PackedScene" uid="uid://cnciwouniijlo" path="res://assets/models/Meshy_AI_biped/Meshy_AI_Animation_Running_withSkin.glb" id="1_run"]
 
 [node name="meshy_run" instance=ExtResource("1_run")]
