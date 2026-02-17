@@ -101,6 +101,7 @@ func _create_ui_elements() -> void:
 		# Adjust scale/orientation for UI
 		heart_3d.scale = Vector3(0.2, 0.2, 0.2)
 		heart_3d.rotation = Vector3(0.0, 0.3, 0.0)
+		heart_3d.position = Vector3(0, -0.2, 0)
 	
 	# BPM Label
 	bpm_label = Label.new()

@@ -4,7 +4,9 @@ func _ready() -> void:
 	var anim_player: AnimationPlayer = _find_animation_player(self)
 	if anim_player and anim_player.get_animation_list().size() > 0:
 		var anims = anim_player.get_animation_list()
-		anim_player.play(anims[0])
+		var anim = anims[0]
+		anim_player.play(anim)
+		anim_player.get_animation(anim).loop_mode = Animation.LOOP_LINEAR
 	else:
 		print("Heart3D: No AnimationPlayer/animations found")
 
