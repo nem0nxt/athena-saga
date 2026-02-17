@@ -8,14 +8,19 @@ func _ready() -> void:
 		var animation = anim_player.get_animation(anim)
 		animation.loop_mode = Animation.LOOP_LINEAR
 		anim_player.play(anim)
-		# Freeze animation transform impact and keep model anchored
-		position = Vector3(0, 0, 0)
+		# Anchor model
+		position = Vector3.ZERO
 		if has_node("HeartModel"):
 			var model = get_node("HeartModel") as Node3D
-			model.position = Vector3(0, 0, 0)
-			model.scale = Vector3(0.12, 0.12, 0.12)
+			model.position = Vector3.ZERO
 	else:
 		print("Heart3D: No AnimationPlayer/animations found")
+
+func _process(_delta: float) -> void:
+	# Prevent root motion drift
+	position = Vector3.ZERO
+	if has_node("HeartModel"):
+		(get_node("HeartModel") as Node3D).position = Vector3.ZERO
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
