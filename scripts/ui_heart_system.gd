@@ -51,6 +51,9 @@ func _process(delta: float) -> void:
 	
 	if heart_root:
 		heart_root.scale = Vector3(beat_scale, beat_scale, beat_scale)
+		# Sync animation speed with BPM
+		if heart_3d and heart_3d.has_method("set_bpm"):
+			heart_3d.call("set_bpm", current_bpm)
 	
 	# Update UI
 	_update_bpm_display()

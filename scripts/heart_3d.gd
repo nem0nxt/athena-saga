@@ -1,13 +1,16 @@
 extends Node3D
 
+var anim_player: AnimationPlayer = null
+var anim_name: String = ""
+
 func _ready() -> void:
-	var anim_player: AnimationPlayer = _find_animation_player(self)
+	anim_player = _find_animation_player(self)
 	if anim_player and anim_player.get_animation_list().size() > 0:
 		var anims = anim_player.get_animation_list()
-		var anim = anims[0]
-		var animation = anim_player.get_animation(anim)
+		anim_name = anims[0]
+		var animation = anim_player.get_animation(anim_name)
 		animation.loop_mode = Animation.LOOP_LINEAR
-		anim_player.play(anim)
+		anim_player.play(anim_name)
 		# Anchor model
 		position = Vector3.ZERO
 		if has_node("HeartModel"):
@@ -15,6 +18,13 @@ func _ready() -> void:
 			model.position = Vector3.ZERO
 	else:
 		print("Heart3D: No AnimationPlayer/animations found")
+
+func set_bpm(bpm: float) -> void:
+	if not anim_player:
+		return
+	# Base BPM 80 => speed 1.0
+	var speed = clamp(bpm / 80.0, 0.5, 2.0)
+	anim_player.speed_scale = speed
 
 func _process(_delta: float) -> void:
 	# Prevent root motion drift
