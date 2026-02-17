@@ -22,8 +22,8 @@ func _ready() -> void:
 func set_bpm(bpm: float) -> void:
 	if not anim_player:
 		return
-	# Base BPM 80 => speed 1.0
-	var speed = clamp(bpm / 80.0, 0.5, 2.0)
+	# Base BPM 60 => speed 1.0 (faster overall)
+	var speed = clamp(bpm / 60.0, 0.6, 3.0)
 	anim_player.speed_scale = speed
 
 func _process(_delta: float) -> void:
