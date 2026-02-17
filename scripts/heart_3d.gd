@@ -7,8 +7,6 @@ func _ready() -> void:
 		var anim = anims[0]
 		var animation = anim_player.get_animation(anim)
 		animation.loop_mode = Animation.LOOP_LINEAR
-		# Ensure we lock the root transform during animation
-		animation.loop_wrap = true
 		anim_player.play(anim)
 		# Freeze animation transform impact and keep model anchored
 		position = Vector3(0, 0, 0)
