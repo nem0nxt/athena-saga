@@ -77,6 +77,7 @@ func _create_ui_elements() -> void:
 
 	# Scene root for 3D
 	heart_root = Node3D.new()
+	heart_root.scale = Vector3(0.05, 0.05, 0.05)
 	heart_viewport.add_child(heart_root)
 
 	# Camera
@@ -99,7 +100,6 @@ func _create_ui_elements() -> void:
 	if heart_3d:
 		heart_root.add_child(heart_3d)
 		# Adjust scale/orientation for UI
-		heart_3d.scale = Vector3(1.0, 1.0, 1.0)
 		heart_3d.rotation = Vector3(0.0, 0.2, 0.0)
 		heart_3d.position = Vector3(0, 0.0, 0)
 	
