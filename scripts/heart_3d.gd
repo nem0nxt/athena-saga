@@ -5,8 +5,17 @@ func _ready() -> void:
 	if anim_player and anim_player.get_animation_list().size() > 0:
 		var anims = anim_player.get_animation_list()
 		var anim = anims[0]
+		var animation = anim_player.get_animation(anim)
+		animation.loop_mode = Animation.LOOP_LINEAR
+		# Ensure we lock the root transform during animation
+		animation.loop_wrap = true
 		anim_player.play(anim)
-		anim_player.get_animation(anim).loop_mode = Animation.LOOP_LINEAR
+		# Freeze animation transform impact and keep model anchored
+		position = Vector3(0, 0, 0)
+		if has_node("HeartModel"):
+			var model = get_node("HeartModel") as Node3D
+			model.position = Vector3(0, 0, 0)
+			model.scale = Vector3(0.12, 0.12, 0.12)
 	else:
 		print("Heart3D: No AnimationPlayer/animations found")
 
