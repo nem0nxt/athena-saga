@@ -48,8 +48,9 @@ transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.6
 shadow_enabled = true
 
 [node name="Player" type="CharacterBody3D" parent="." unique_id=1113429672]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 collision_layer = 2
+collision_mask = 1
 script = ExtResource("1_player")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=1977544633]
@@ -73,8 +74,6 @@ spring_length = 5.0
 [node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D" unique_id=2072144184]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 fov = 70.0
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Player" unique_id=1787111639]
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=857627980]
 

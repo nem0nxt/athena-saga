@@ -32,9 +32,12 @@ var _rock_packed: Array[PackedScene] = []
 
 func _snap_to_terrain(pos: Vector3) -> Vector3:
 	# Raycast down to find terrain height
+	var w3d = get_world_3d()
+	if not w3d:
+		return pos
 	var from = pos + Vector3.UP * terrain_ray_height
 	var to = pos + Vector3.DOWN * terrain_ray_height
-	var space_state = get_world_3d().direct_space_state
+	var space_state = w3d.direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
 	query.collision_mask = 1
 	var hit = space_state.intersect_ray(query)
@@ -45,6 +48,11 @@ func _snap_to_terrain(pos: Vector3) -> Vector3:
 
 func _ready() -> void:
 	_load_scenes()
+	# Wait for physics frames so terrain collision shapes are registered
+	# in the physics world before raycasting for snap-to-terrain
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	await get_tree().physics_frame
 	_spawn_forest()
 
 func _load_scenes() -> void:

@@ -71,15 +71,14 @@ def main():
             base_armature = current_armature
             base_meshes = get_meshes_for_armature(base_armature)
 
-            # Rename the first action and push to NLA
+            # Rename the first action and push to NLA (direct API - works in Blender 5 headless)
             if base_armature.animation_data and base_armature.animation_data.action:
-                base_armature.animation_data.action.name = anim_name
-                bpy.context.view_layer.objects.active = base_armature
-                bpy.ops.object.mode_set(mode="OBJECT")
-                bpy.ops.nla.action_pushdown()
-                # Rename NLA track to match (glTF export uses track names)
-                if base_armature.animation_data.nla_tracks:
-                    base_armature.animation_data.nla_tracks[-1].name = anim_name
+                action = base_armature.animation_data.action
+                action.name = anim_name
+                track = base_armature.animation_data.nla_tracks.new()
+                track.name = anim_name
+                track.strips.new(action.name, int(action.frame_range[0]), action)
+                base_armature.animation_data.action = None
             print(f"Imported base: {anim_name}")
         else:
             # Subsequent import - copy action to base, then delete duplicate
@@ -95,14 +94,13 @@ def main():
                     bpy.data.objects.remove(m, do_unlink=True)
                 bpy.data.objects.remove(current_armature, do_unlink=True)
 
-                # Assign to base armature and push to NLA
-                bpy.context.view_layer.objects.active = base_armature
+                # Assign to base armature and push to NLA (direct API - works in Blender 5 headless)
                 base_armature.animation_data_create()
                 base_armature.animation_data.action = new_action
-                bpy.ops.object.mode_set(mode="OBJECT")
-                bpy.ops.nla.action_pushdown()
-                if base_armature.animation_data.nla_tracks:
-                    base_armature.animation_data.nla_tracks[-1].name = anim_name
+                track = base_armature.animation_data.nla_tracks.new()
+                track.name = anim_name
+                track.strips.new(new_action.name, int(new_action.frame_range[0]), new_action)
+                base_armature.animation_data.action = None
                 print(f"Added animation: {anim_name}")
             else:
                 # No action - just delete duplicate

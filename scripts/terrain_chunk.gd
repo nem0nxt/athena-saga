@@ -91,27 +91,17 @@ func generate_terrain() -> void:
 	# Create collision
 	create_collision()
 
-func get_height_at(x: float, z: float) -> float:
-	# Simple procedural height using sine waves (noise substitute)
-	var height = 0.0
-	
-	# Large features
-	height += sin((x + noise_offset.x) * 0.05) * 2.0
-	height += cos((z + noise_offset.y) * 0.05) * 2.0
-	
-	# Small features
-	height += sin((x + noise_offset.x) * 0.1) * 0.5
-	height += cos((z + noise_offset.y) * 0.1) * 0.5
-	
-	return height
+func get_height_at(_x: float, _z: float) -> float:
+	# Completely flat terrain for reliable collision
+	return 0.0
 
 func create_collision() -> void:
-	# Create collision shape matching the mesh
+	# Use a simple box collision - more reliable than trimesh for flat terrain
 	collision_shape = CollisionShape3D.new()
-	var box_shape = BoxShape3D.new()
-	box_shape.size = Vector3(chunk_size, terrain_height, chunk_size)
-	collision_shape.shape = box_shape
-	collision_shape.position.y = 0.0  # Center at y=0 to match mesh height range
+	var box = BoxShape3D.new()
+	box.size = Vector3(chunk_size, 2.0, chunk_size)  # 2 units thick
+	collision_shape.shape = box
+	collision_shape.position.y = -1.0  # Top of box at y=0
 	add_child(collision_shape)
 
 func set_lod(distance: float) -> void:

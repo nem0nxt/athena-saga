@@ -9,7 +9,8 @@ func _ready() -> void:
 		var anims = anim_player.get_animation_list()
 		anim_name = anims[0]
 		var animation = anim_player.get_animation(anim_name)
-		animation.loop_mode = Animation.LOOP_LINEAR
+		if animation:
+			animation.loop_mode = Animation.LOOP_LINEAR
 		anim_player.play(anim_name)
 		# Anchor model
 		position = Vector3.ZERO

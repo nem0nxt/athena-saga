@@ -5,13 +5,11 @@ class_name HeartSystemUI
 # Position: Bottom-left
 
 # References (created in code)
-var heart_3d: Node3D = null
-var heart_viewport: SubViewport = null
-var heart_root: Node3D = null
 var health_bar: ProgressBar = null
-var health_fill: ColorRect = null
 var bpm_label: Label = null
 var heartbeat_player: AudioStreamPlayer = null
+var heart_3d: Node3D = null
+var heart_viewport: SubViewport = null
 
 # Heart rate system
 var current_bpm: float = 80.0
@@ -32,6 +30,10 @@ func _ready() -> void:
 	call_deferred("_setup_ui")
 
 func _setup_ui() -> void:
+	# Clear any existing children from scene file
+	for child in get_children():
+		child.queue_free()
+	
 	_create_ui_elements()
 	_setup_heartbeat_sound()
 	_update_bpm_display()
@@ -48,88 +50,116 @@ func _process(delta: float) -> void:
 		beat_timer = 0.0
 		_beat()
 	
-	# Animate heart scale
+	# Animate label scale for heartbeat effect
 	beat_scale = lerp(beat_scale, 1.0, delta * 8.0)
+	if bpm_label:
+		bpm_label.scale = Vector2(beat_scale, beat_scale)
 	
-	if heart_root:
-		heart_root.scale = Vector3(beat_scale, beat_scale, beat_scale)
-		# Sync animation speed with BPM
-		if heart_3d and heart_3d.has_method("set_bpm"):
-			heart_3d.call("set_bpm", current_bpm)
+	# Sync 3D heart animation speed with BPM
+	if heart_3d and heart_3d.has_method("set_bpm"):
+		heart_3d.set_bpm(current_bpm)
 	
 	# Update UI
 	_update_bpm_display()
 	_update_health_bar()
 
 func _create_ui_elements() -> void:
-	var container = Control.new()
-	container.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	container.position = Vector2(20, -150)
-	container.size = Vector2(160, 130)
-	add_child(container)
+	# Create a panel in the bottom-left corner
+	var panel = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	panel.offset_left = 10
+	panel.offset_top = -180
+	panel.offset_right = 190
+	panel.offset_bottom = -10
 	
-	# 3D animated heart via SubViewport
-	var vp_container = SubViewportContainer.new()
-	vp_container.size = Vector2(160, 130)
-	vp_container.stretch = true
-	container.add_child(vp_container)
-
+	# Dark semi-transparent background
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.5)
+	style.set_corner_radius_all(8)
+	panel.add_theme_stylebox_override("panel", style)
+	add_child(panel)
+	
+	# VBox for layout
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	panel.add_child(vbox)
+	
+	# 3D Heart via SubViewport
 	heart_viewport = SubViewport.new()
-	heart_viewport.size = Vector2i(160, 130)
+	heart_viewport.size = Vector2i(160, 100)
 	heart_viewport.transparent_bg = true
 	heart_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	vp_container.add_child(heart_viewport)
-
-	# Scene root for 3D
-	heart_root = Node3D.new()
-	heart_root.scale = Vector3(0.05, 0.05, 0.05)
-	heart_viewport.add_child(heart_root)
-
-	# Camera
+	heart_viewport.own_world_3d = true  # Isolate from main world
+	add_child(heart_viewport)  # Add to tree first
+	
+	# 3D scene setup inside viewport
+	var scene_root = Node3D.new()
+	heart_viewport.add_child(scene_root)
+	
+	# Camera for the heart - pull back to see whole heart
 	var cam = Camera3D.new()
-	cam.position = Vector3(0, 0.0, 1.0)
-	cam.fov = 55.0
-	heart_root.add_child(cam)
-	# Defer look_at until nodes are in tree
-	cam.call_deferred("look_at", Vector3(0, 0, 0), Vector3.UP)
-
-	# Light
+	cam.position = Vector3(0, 0, 0.25)
+	cam.fov = 50.0
+	cam.current = true
+	scene_root.add_child(cam)
+	
+	# Lights
 	var light = DirectionalLight3D.new()
-	light.position = Vector3(1.5, 2.0, 2.0)
-	heart_root.add_child(light)
-	light.call_deferred("look_at", Vector3(0, 0, 0), Vector3.UP)
-
-	# Heart model
-	var heart_scene = preload("res://scenes/Heart3D.tscn")
-	heart_3d = heart_scene.instantiate()
-	if heart_3d:
-		heart_root.add_child(heart_3d)
-		# Adjust scale/orientation for UI
-		heart_3d.rotation = Vector3(0.0, 0.2, 0.0)
-		heart_3d.position = Vector3(0, 0.0, 0)
+	light.rotation_degrees = Vector3(-45, 45, 0)
+	light.light_energy = 2.0
+	scene_root.add_child(light)
+	
+	var light2 = DirectionalLight3D.new()
+	light2.rotation_degrees = Vector3(-30, -60, 0)
+	light2.light_energy = 1.0
+	scene_root.add_child(light2)
+	
+	# Load and add the 3D heart model
+	var heart_scene = load("res://scenes/Heart3D.tscn")
+	if heart_scene:
+		heart_3d = heart_scene.instantiate()
+		# FBX has root_scale=0.05, scale down more for UI
+		heart_3d.scale = Vector3(0.3, 0.3, 0.3)
+		heart_3d.position = Vector3(0, -0.06, 0)  # Move down to center
+		scene_root.add_child(heart_3d)
+	else:
+		print("ERROR: Could not load Heart3D.tscn")
+	
+	# TextureRect to display the viewport
+	var heart_display = TextureRect.new()
+	heart_display.custom_minimum_size = Vector2(160, 100)
+	heart_display.texture = heart_viewport.get_texture()
+	heart_display.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	vbox.add_child(heart_display)
 	
 	# BPM Label
 	bpm_label = Label.new()
 	bpm_label.text = "♥ 80 BPM"
-	bpm_label.position = Vector2(0, -55)
 	bpm_label.add_theme_font_size_override("font_size", 20)
-	container.add_child(bpm_label)
+	bpm_label.add_theme_color_override("font_color", HEART_COLOR)
+	bpm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(bpm_label)
 	
 	# Health Bar (blood style)
 	health_bar = ProgressBar.new()
-	health_bar.position = Vector2(0, -35)
-	health_bar.size = Vector2(160, 15)
+	health_bar.custom_minimum_size = Vector2(160, 16)
 	health_bar.min_value = 0.0
 	health_bar.max_value = max_heart_health
 	health_bar.value = heart_health
 	health_bar.show_percentage = false
 	
-	health_fill = ColorRect.new()
-	health_fill.color = BLOOD_COLOR
-	health_fill.set_anchors_preset(Control.PRESET_FULL_RECT)
-	health_bar.add_child(health_fill)
+	# Style the progress bar
+	var style_bg = StyleBoxFlat.new()
+	style_bg.bg_color = Color(0.15, 0.08, 0.08, 1.0)
+	style_bg.set_corner_radius_all(4)
+	health_bar.add_theme_stylebox_override("background", style_bg)
 	
-	container.add_child(health_bar)
+	var style_fill = StyleBoxFlat.new()
+	style_fill.bg_color = BLOOD_COLOR
+	style_fill.set_corner_radius_all(4)
+	health_bar.add_theme_stylebox_override("fill", style_fill)
+	
+	vbox.add_child(health_bar)
 
 func _setup_heartbeat_sound() -> void:
 	heartbeat_player = AudioStreamPlayer.new()
@@ -143,9 +173,11 @@ func _setup_heartbeat_sound() -> void:
 
 func _beat() -> void:
 	beat_scale = 1.15 + (current_bpm / 200.0) * 0.1
-	# Sync 3D heart animation with sound (restart at beat)
+	
+	# Sync 3D heart animation with beat
 	if heart_3d and heart_3d.has_method("sync_to_beat"):
 		heart_3d.sync_to_beat()
+	
 	if heartbeat_player and heartbeat_player.stream:
 		heartbeat_player.play()
 
@@ -161,15 +193,8 @@ func _update_bpm_display() -> void:
 			bpm_label.modulate = Color(0.9, 0.9, 0.9, 1.0)
 
 func _update_health_bar() -> void:
-	if health_bar and health_fill:
+	if health_bar:
 		health_bar.value = heart_health
-		
-		if heart_health > 60:
-			health_fill.color = BLOOD_COLOR
-		elif heart_health > 30:
-			health_fill.color = Color(0.8, 0.3, 0.1, 1.0)
-		else:
-			health_fill.color = Color(0.5, 0.05, 0.05, 1.0)
 
 # Public API
 func set_bpm(new_bpm: float) -> void:

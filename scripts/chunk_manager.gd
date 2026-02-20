@@ -9,7 +9,7 @@ static var instance: ChunkManager
 
 # Configuration
 @export var chunk_size: float = 50.0
-@export var render_distance: int = 2  # Chunks in each direction from player
+@export var render_distance: int = 3  # Chunks in each direction from player
 @export var update_interval: float = 0.5  # Seconds between chunk updates
 
 # World seed for procedural generation
@@ -25,7 +25,7 @@ var chunk_containers: Dictionary = {}  # Vector2i -> Node3D container
 
 # State
 var current_chunk: Vector2i = Vector2i.ZERO
-var last_update_time: float = 0.0
+var last_update_time: float = -999.0  # Force immediate first chunk load
 var is_debug_mode: bool = false
 
 # Signals for other systems
@@ -37,8 +37,11 @@ func _ready() -> void:
 	instance = self
 	add_to_group("chunk_manager")
 	
-	# Load terrain chunk script (applied to StaticBody3D in load_chunk)
 	chunk_script = load("res://scripts/terrain_chunk.gd") as Script
+	
+	# Load terrain at origin immediately so it exists before Player physics runs
+	current_chunk = Vector2i.ZERO
+	load_required_chunks()
 	
 	if is_debug_mode:
 		print("ChunkManager initialized")
@@ -131,6 +134,7 @@ func load_chunk(chunk_pos: Vector2i) -> void:
 	
 	# Create chunk using script directly (not a scene for simplicity)
 	var chunk = StaticBody3D.new()
+	chunk.collision_layer = 1
 	chunk.set_script(chunk_script)
 	chunk.name = "TerrainChunk"
 	
@@ -179,8 +183,8 @@ func unload_chunk(chunk_pos: Vector2i) -> void:
 		print("Unloaded chunk: ", chunk_pos)
 
 func get_chunk_distance(chunk_a: Vector2i, chunk_b: Vector2i) -> int:
-	# Manhattan distance for chunk culling
-	return abs(chunk_a.x - chunk_b.x) + abs(chunk_a.y - chunk_b.y)
+	# Chebyshev distance (max of axis diffs) for square render area
+	return maxi(abs(chunk_a.x - chunk_b.x), abs(chunk_a.y - chunk_b.y))
 
 func get_active_chunks() -> Dictionary:
 	return active_chunks
