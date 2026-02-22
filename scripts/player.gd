@@ -43,6 +43,7 @@ const SCENE_MESHY_IDLE = preload("res://scenes/MeshyIdle.tscn")
 const SCENE_MESHY_IDLE_SHORT = preload("res://scenes/MeshyShortBreathe.tscn")
 const SCENE_MESHY_WALK = preload("res://scenes/MeshyWalk.tscn")
 const SCENE_MESHY_RUN = preload("res://scenes/MeshyRun.tscn")
+const SCENE_MESHY_DEATH = preload("res://scenes/MeshyDeath.tscn")
 const ANIM_IDLE = "Idle"
 const ANIM_IDLE_SHORT = "IdleShort"
 const ANIM_WALK = "Walk"
@@ -92,6 +93,7 @@ func _setup_anim_instances() -> void:
 		ANIM_IDLE_SHORT: SCENE_MESHY_IDLE_SHORT,
 		ANIM_WALK: SCENE_MESHY_WALK,
 		ANIM_RUN: SCENE_MESHY_RUN,
+		ANIM_DEATH: SCENE_MESHY_DEATH,
 	}
 
 	for state_name in scene_map:
@@ -111,6 +113,9 @@ func _setup_anim_instances() -> void:
 				anim_name = anims[0]
 				var anim = ap.get_animation(anim_name)
 				if anim:
+					if state_name == ANIM_DEATH:
+						anim.loop_mode = Animation.LOOP_NONE
+					else:
 						anim.loop_mode = Animation.LOOP_LINEAR
 		_anim_instances[state_name] = {
 			"node": instance,
@@ -138,6 +143,9 @@ func _find_node_of_type(node: Node, type_name: String) -> Node:
 
 func _switch_anim(state: String) -> void:
 	if state == _current_anim_state:
+		return
+	# Never override death animation once playing
+	if _current_anim_state == ANIM_DEATH and state != ANIM_DEATH:
 		return
 	if not _anim_instances.has(state):
 		state = ANIM_IDLE
@@ -169,13 +177,8 @@ func _input(event: InputEvent) -> void:
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
-	if event.is_action_pressed("attack") and not is_attacking:
+	if event.is_action_pressed("attack") and not is_attacking and not is_dead:
 		attack()
-	
-	if event is InputEventKey and event.pressed and event.keycode == KEY_K and not is_dead:
-		print("DEBUG: Triggering death via K key")
-		health = 0
-		die()
 
 func _physics_process(delta: float) -> void:
 	if is_dead:
@@ -355,6 +358,8 @@ func check_attack_hit() -> void:
 			enemy.take_damage(25.0)
 
 func take_damage(amount: float) -> void:
+	if is_dead:
+		return
 	health -= amount
 	_switch_anim(ANIM_TAKE_DAMAGE)
 
@@ -362,55 +367,21 @@ func take_damage(amount: float) -> void:
 		heart_ui.add_bpm(20.0)
 
 	if health <= 0:
-		await get_tree().create_timer(0.5).timeout
-		if is_instance_valid(self):
-			die()
+		die()
 
 func die() -> void:
 	if is_dead:
 		return
 	is_dead = true
 	velocity = Vector3.ZERO
-	print("DIE called - health: ", health)
 	
-	# Keep current animation visible but freeze it
-	if animation_player:
-		animation_player.pause()
+	# Play death animation
+	_current_anim_state = ""
+	_switch_anim(ANIM_DEATH)
 	
 	# Stop the heart
 	if heart_ui and heart_ui.has_method("stop_heart"):
 		heart_ui.stop_heart()
-	
-	# Run death as coroutine
-	_run_death_anim()
-
-func _run_death_anim() -> void:
-	var pivot = $MeshPivot
-	var start_pos = pivot.position
-	print("Death anim start - pivot pos: ", start_pos, " rot: ", pivot.rotation)
-	
-	# Phase 1: Stagger back (0.7s)
-	var t1 = create_tween()
-	t1.tween_property(pivot, "rotation", Vector3(deg_to_rad(-12), 0, deg_to_rad(5)), 0.35)
-	t1.tween_property(pivot, "rotation", Vector3(deg_to_rad(-5), 0, deg_to_rad(-3)), 0.35)
-	await t1.finished
-	print("Phase 1 done")
-	
-	# Phase 2: Knees buckle, drop + lean forward (0.6s)
-	var t2 = create_tween().set_parallel(true)
-	t2.tween_property(pivot, "position:y", start_pos.y - 0.5, 0.6).set_ease(Tween.EASE_IN)
-	t2.tween_property(pivot, "rotation:x", deg_to_rad(30), 0.6).set_ease(Tween.EASE_IN)
-	t2.tween_property(pivot, "rotation:z", deg_to_rad(6), 0.6)
-	await t2.finished
-	print("Phase 2 done")
-	
-	# Phase 3: Slam face-first into ground (0.4s)
-	var t3 = create_tween().set_parallel(true)
-	t3.tween_property(pivot, "rotation:x", deg_to_rad(90), 0.4).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-	t3.tween_property(pivot, "position:y", start_pos.y - 0.9, 0.4).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-	t3.tween_property(pivot, "rotation:z", deg_to_rad(2), 0.4)
-	await t3.finished
-	print("Phase 3 done - character should be on ground")
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
