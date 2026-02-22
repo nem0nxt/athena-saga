@@ -21,6 +21,11 @@ var max_heart_health: float = 100.0
 var beat_timer: float = 0.0
 var beat_scale: float = 1.0
 
+# Heart attack visual effect
+var heart_attack_overlay: ColorRect = null
+var is_in_heart_attack: bool = false
+var heart_attack_pulse: float = 0.0
+
 # Colors
 var HEART_COLOR: Color = Color(0.85, 0.2, 0.3, 1.0)
 var BLOOD_COLOR: Color = Color(0.9, 0.1, 0.1, 1.0)
@@ -36,9 +41,14 @@ func _setup_ui() -> void:
 	
 	_create_ui_elements()
 	_setup_heartbeat_sound()
+	_create_heart_attack_overlay()
 	_update_bpm_display()
 
 func _process(delta: float) -> void:
+	# Skip processing if heart is stopped
+	if is_heart_stopped:
+		return
+	
 	# Smooth BPM transition
 	current_bpm = lerp(current_bpm, target_bpm, delta * 2.0)
 	
@@ -54,6 +64,9 @@ func _process(delta: float) -> void:
 	beat_scale = lerp(beat_scale, 1.0, delta * 8.0)
 	if bpm_label:
 		bpm_label.scale = Vector2(beat_scale, beat_scale)
+	
+	# Update heart attack visual effect
+	_update_heart_attack_effect(delta)
 	
 	# Sync 3D heart animation speed with BPM
 	if heart_3d and heart_3d.has_method("set_bpm"):
@@ -198,15 +211,15 @@ func _update_health_bar() -> void:
 
 # Public API
 func set_bpm(new_bpm: float) -> void:
-	target_bpm = clamp(new_bpm, 40.0, 200.0)
+	target_bpm = clamp(new_bpm, 40.0, 250.0)
 
 func add_bpm(amount: float) -> void:
 	target_bpm += amount
-	target_bpm = clamp(target_bpm, 40.0, 200.0)
+	target_bpm = clamp(target_bpm, 40.0, 250.0)
 
 func reduce_bpm(amount: float) -> void:
 	target_bpm -= amount
-	target_bpm = clamp(target_bpm, 40.0, 200.0)
+	target_bpm = clamp(target_bpm, 20.0, 250.0)
 
 func take_heart_damage(amount: float) -> void:
 	heart_health -= amount
@@ -226,3 +239,35 @@ func is_critical() -> bool:
 
 func _on_heart_attack() -> void:
 	print("HEART ATTACK!")
+
+func _create_heart_attack_overlay() -> void:
+	heart_attack_overlay = ColorRect.new()
+	heart_attack_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	heart_attack_overlay.color = Color(0.8, 0.0, 0.0, 0.0)
+	heart_attack_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(heart_attack_overlay)
+	heart_attack_overlay.visible = false
+
+func set_heart_attack_active(active: bool) -> void:
+	is_in_heart_attack = active
+	if heart_attack_overlay:
+		heart_attack_overlay.visible = active
+
+func _update_heart_attack_effect(delta: float) -> void:
+	if not is_in_heart_attack or not heart_attack_overlay:
+		return
+	
+	heart_attack_pulse += delta * 8.0
+	var pulse_alpha = 0.3 + 0.2 * sin(heart_attack_pulse)
+	heart_attack_overlay.color = Color(0.8, 0.0, 0.0, pulse_alpha)
+
+var is_heart_stopped: bool = false
+
+func stop_heart() -> void:
+	is_heart_stopped = true
+	target_bpm = 0.0
+	current_bpm = 0.0
+	if bpm_label:
+		bpm_label.text = "0 BPM"
+	if heart_3d and heart_3d.has_method("stop_animation"):
+		heart_3d.stop_animation()

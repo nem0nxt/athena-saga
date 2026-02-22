@@ -19,10 +19,21 @@ var animation_player: AnimationPlayer = null
 var health: float = 100.0
 var max_health: float = 100.0
 var is_attacking: bool = false
+var is_dead: bool = false
 
 # Heart Rate System
 var heart_ui: Control = null
-var base_bpm: float = 80.0
+var base_bpm: float = 60.0
+var _running_time: float = 0.0  # Track continuous running time
+const EXHAUSTION_THRESHOLD: float = 60.0  # 1 minute before exponential increase
+
+# Heart Attack System
+var is_heart_attack: bool = false
+var heart_attack_timer: float = 0.0
+const HEART_ATTACK_DURATION: float = 5.0  # How long the heart attack lasts
+const HEART_ATTACK_BPM_THRESHOLD: float = 240.0  # BPM that triggers heart attack
+var heart_attack_damage_timer: float = 0.0
+var speed_modifier: float = 1.0  # Multiplier for movement speed
 
 # Animation: preloaded scene instances keyed by state
 var _anim_instances: Dictionary = {}
@@ -32,14 +43,13 @@ const SCENE_MESHY_IDLE = preload("res://scenes/MeshyIdle.tscn")
 const SCENE_MESHY_IDLE_SHORT = preload("res://scenes/MeshyShortBreathe.tscn")
 const SCENE_MESHY_WALK = preload("res://scenes/MeshyWalk.tscn")
 const SCENE_MESHY_RUN = preload("res://scenes/MeshyRun.tscn")
-
 const ANIM_IDLE = "Idle"
 const ANIM_IDLE_SHORT = "IdleShort"
 const ANIM_WALK = "Walk"
 const ANIM_RUN = "Run"
 const ANIM_ATTACK = "Idle"
 const ANIM_TAKE_DAMAGE = "Idle"
-const ANIM_DEATH = "Idle"
+const ANIM_DEATH = "Death"
 
 const IDLE_SHORT_TO_LONG_TIME: float = 2.0
 var _idle_time: float = 0.0
@@ -59,6 +69,10 @@ func _ready() -> void:
 
 	_setup_anim_instances()
 
+	# Defer heart UI lookup to ensure it's initialized
+	call_deferred("_setup_heart_ui")
+
+func _setup_heart_ui() -> void:
 	heart_ui = get_tree().get_first_node_in_group("heart_ui")
 	if heart_ui:
 		heart_ui.set_bpm(base_bpm)
@@ -97,7 +111,7 @@ func _setup_anim_instances() -> void:
 				anim_name = anims[0]
 				var anim = ap.get_animation(anim_name)
 				if anim:
-					anim.loop_mode = Animation.LOOP_LINEAR
+						anim.loop_mode = Animation.LOOP_LINEAR
 		_anim_instances[state_name] = {
 			"node": instance,
 			"ap": ap,
@@ -108,9 +122,9 @@ func _setup_anim_instances() -> void:
 	_switch_anim(ANIM_IDLE_SHORT)
 	
 	# Position mesh pivot so character feet touch the ground
-	# The collision capsule bottom is at y=0 (center at 0.9, half-height 0.9)
-	# Character model origin appears to be above feet, so lower it
-	$MeshPivot.position.y = -1.0
+	# The collision capsule center is at y=0.9, radius 0.4, so bottom is at y=0
+	# Adjust based on character model origin
+	$MeshPivot.position.y = -0.1
 	
 
 func _find_node_of_type(node: Node, type_name: String) -> Node:
@@ -157,9 +171,19 @@ func _input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("attack") and not is_attacking:
 		attack()
-
+	
+	if event is InputEventKey and event.pressed and event.keycode == KEY_K and not is_dead:
+		print("DEBUG: Triggering death via K key")
+		health = 0
+		die()
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		if not is_on_floor():
+			velocity.y -= gravity * delta
+			move_and_slide()
+		return
+	
 	# Respawn if fallen off world
 	if global_position.y < -50.0:
 		global_position = _spawn_pos
@@ -171,7 +195,7 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
-		_on_running()
+		_on_running(delta)
 
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var raw_dir := camera_pivot.global_transform.basis * Vector3(input_dir.x, 0, input_dir.y)
@@ -180,8 +204,9 @@ func _physics_process(delta: float) -> void:
 
 	if direction:
 		_idle_time = 0.0
-		velocity.x = lerp(velocity.x, direction.x * SPEED, ACCELERATION * delta)
-		velocity.z = lerp(velocity.z, direction.z * SPEED, ACCELERATION * delta)
+		var effective_speed = SPEED * speed_modifier
+		velocity.x = lerp(velocity.x, direction.x * effective_speed, ACCELERATION * delta)
+		velocity.z = lerp(velocity.z, direction.z * effective_speed, ACCELERATION * delta)
 
 		var target_angle := atan2(direction.x, direction.z)
 		mesh.rotation.y = lerp_angle(mesh.rotation.y, target_angle, 10 * delta)
@@ -189,10 +214,10 @@ func _physics_process(delta: float) -> void:
 		if is_on_floor() and not is_attacking:
 			if input_dir.length() > 0.6:
 				_switch_anim(ANIM_RUN)
-				_on_running()
+				_on_running(delta)
 			else:
 				_switch_anim(ANIM_WALK)
-				_on_running()
+				_on_running(delta)
 	else:
 		velocity.x = lerp(velocity.x, 0.0, FRICTION * delta)
 		velocity.z = lerp(velocity.z, 0.0, FRICTION * delta)
@@ -206,22 +231,98 @@ func _physics_process(delta: float) -> void:
 		_idle_time = 0.0
 		_switch_anim(ANIM_IDLE_SHORT)
 
-	_check_heart_attack()
+	_check_heart_attack(delta)
 	move_and_slide()
 
-func _on_running() -> void:
+func _on_running(delta: float) -> void:
+	_running_time += delta
 	if heart_ui:
-		var speed_modifier = velocity.length() / SPEED
-		var target_bpm = base_bpm + (40.0 * speed_modifier)
+		var velocity_factor = velocity.length() / SPEED
+		var target_bpm = base_bpm + (40.0 * velocity_factor)
+		
+		# After threshold, heart rate increases exponentially
+		if _running_time > EXHAUSTION_THRESHOLD:
+			var overtime = _running_time - EXHAUSTION_THRESHOLD
+			# Exponential factor: doubles every ~7 seconds of overtime
+			var exhaustion_factor = pow(1.1, overtime)
+			var extra_bpm = 30.0 * (exhaustion_factor - 1.0)
+			target_bpm += extra_bpm
+			# Cap at dangerous levels
+			target_bpm = minf(target_bpm, 250.0)
+		
 		heart_ui.set_bpm(target_bpm)
 
 func _on_idle(delta: float) -> void:
+	# Reset running time when idle (resting) at 0.2x speed
+	_running_time = maxf(0.0, _running_time - delta * 0.25)
 	if heart_ui:
-		heart_ui.reduce_bpm(30.0 * delta)
+		# Gradually return to base BPM
+		var recovery_bpm = base_bpm
+		# If still exhausted, BPM stays elevated
+		if _running_time > EXHAUSTION_THRESHOLD:
+			var overtime = _running_time - EXHAUSTION_THRESHOLD
+			var exhaustion_factor = pow(1.1, overtime)
+			recovery_bpm += 30.0 * (exhaustion_factor - 1.0)
+			recovery_bpm = minf(recovery_bpm, 250.0)
+		heart_ui.set_bpm(recovery_bpm)
 
-func _check_heart_attack() -> void:
-	if heart_ui and heart_ui.is_dangerous_bpm():
-		pass
+func _check_heart_attack(delta: float) -> void:
+	if not heart_ui:
+		return
+	
+	var current_bpm = heart_ui.current_bpm
+	
+	# Trigger heart attack when BPM exceeds threshold
+	if current_bpm >= HEART_ATTACK_BPM_THRESHOLD and not is_heart_attack:
+		_start_heart_attack()
+	
+	# Process ongoing heart attack
+	if is_heart_attack:
+		heart_attack_timer += delta
+		heart_attack_damage_timer += delta
+		
+		# Apply damage every 0.5 seconds during heart attack
+		if heart_attack_damage_timer >= 0.5:
+			heart_attack_damage_timer = 0.0
+			health -= 5.0
+			heart_ui.take_heart_damage(5.0)
+			if health <= 0:
+				die()
+		
+		# Slow movement during heart attack (30% speed)
+		speed_modifier = 0.3
+		
+		# Screen shake/pulse effect via camera
+		var shake_intensity = 0.05 * (1.0 - heart_attack_timer / HEART_ATTACK_DURATION)
+		camera.position.x = randf_range(-shake_intensity, shake_intensity)
+		camera.position.y = randf_range(-shake_intensity, shake_intensity)
+		
+		# End heart attack after duration
+		if heart_attack_timer >= HEART_ATTACK_DURATION:
+			_end_heart_attack()
+	else:
+		# Gradually restore speed when not in heart attack
+		speed_modifier = lerp(speed_modifier, 1.0, delta * 2.0)
+
+func _start_heart_attack() -> void:
+	is_heart_attack = true
+	heart_attack_timer = 0.0
+	heart_attack_damage_timer = 0.0
+	# Force running time down to help recovery
+	_running_time = EXHAUSTION_THRESHOLD * 0.5
+	# Activate UI effect
+	if heart_ui and heart_ui.has_method("set_heart_attack_active"):
+		heart_ui.set_heart_attack_active(true)
+	print("HEART ATTACK!")
+
+func _end_heart_attack() -> void:
+	is_heart_attack = false
+	heart_attack_timer = 0.0
+	speed_modifier = 0.5  # Still slow after heart attack, recovers gradually
+	camera.position = Vector3.ZERO  # Reset camera position
+	# Deactivate UI effect
+	if heart_ui and heart_ui.has_method("set_heart_attack_active"):
+		heart_ui.set_heart_attack_active(false)
 
 func attack() -> void:
 	is_attacking = true
@@ -266,7 +367,50 @@ func take_damage(amount: float) -> void:
 			die()
 
 func die() -> void:
-	_switch_anim(ANIM_DEATH)
+	if is_dead:
+		return
+	is_dead = true
+	velocity = Vector3.ZERO
+	print("DIE called - health: ", health)
+	
+	# Keep current animation visible but freeze it
+	if animation_player:
+		animation_player.pause()
+	
+	# Stop the heart
+	if heart_ui and heart_ui.has_method("stop_heart"):
+		heart_ui.stop_heart()
+	
+	# Run death as coroutine
+	_run_death_anim()
+
+func _run_death_anim() -> void:
+	var pivot = $MeshPivot
+	var start_pos = pivot.position
+	print("Death anim start - pivot pos: ", start_pos, " rot: ", pivot.rotation)
+	
+	# Phase 1: Stagger back (0.7s)
+	var t1 = create_tween()
+	t1.tween_property(pivot, "rotation", Vector3(deg_to_rad(-12), 0, deg_to_rad(5)), 0.35)
+	t1.tween_property(pivot, "rotation", Vector3(deg_to_rad(-5), 0, deg_to_rad(-3)), 0.35)
+	await t1.finished
+	print("Phase 1 done")
+	
+	# Phase 2: Knees buckle, drop + lean forward (0.6s)
+	var t2 = create_tween().set_parallel(true)
+	t2.tween_property(pivot, "position:y", start_pos.y - 0.5, 0.6).set_ease(Tween.EASE_IN)
+	t2.tween_property(pivot, "rotation:x", deg_to_rad(30), 0.6).set_ease(Tween.EASE_IN)
+	t2.tween_property(pivot, "rotation:z", deg_to_rad(6), 0.6)
+	await t2.finished
+	print("Phase 2 done")
+	
+	# Phase 3: Slam face-first into ground (0.4s)
+	var t3 = create_tween().set_parallel(true)
+	t3.tween_property(pivot, "rotation:x", deg_to_rad(90), 0.4).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	t3.tween_property(pivot, "position:y", start_pos.y - 0.9, 0.4).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	t3.tween_property(pivot, "rotation:z", deg_to_rad(2), 0.4)
+	await t3.finished
+	print("Phase 3 done - character should be on ground")
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:

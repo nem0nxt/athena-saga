@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://meshy_death"]
+
+[ext_resource type="PackedScene" path="res://assets/models/Meshy_AI_biped/Meshy_AI_Animation_Death.glb" id="1_death"]
+
+[node name="meshy_death" instance=ExtResource("1_death")]

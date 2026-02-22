@@ -1,9 +1,13 @@
-[gd_scene format=3 uid="uid://b60irdxee37nr"]
+[gd_scene load_steps=20 format=3 uid="uid://b60irdxee37nr"]
 
 [ext_resource type="Script" uid="uid://cfwvefrat5i0b" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="Script" uid="uid://bfd3qhu765xjj" path="res://scripts/ui_heart_system.gd" id="2_ui"]
-[ext_resource type="Script" uid="uid://dws78ugojbydl" path="res://scripts/chunk_manager.gd" id="3_chunk"]
-[ext_resource type="PackedScene" path="res://scenes/forest.tscn" id="4_forest"]
+[ext_resource type="Script" path="res://scripts/day_night_cycle.gd" id="3_daynight"]
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="4_enemy"]
+[ext_resource type="PackedScene" path="res://assets/models/enemy_creature.glb" id="5_enemy_model"]
+[ext_resource type="PackedScene" path="res://assets/models/nature/terrain.glb" id="6_terrain"]
+[ext_resource type="Script" path="res://scripts/nature_spawner.gd" id="7_nature"]
+[ext_resource type="Script" path="res://scripts/terrain_collider.gd" id="8_terrain_collider"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 sky_top_color = Color(0.2, 0.4, 0.8, 1)
@@ -33,51 +37,65 @@ height = 1.8
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_player"]
 albedo_color = Color(0.85, 0.65, 0.45, 1)
 
-[node name="Main" type="Node3D" unique_id=647725617]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_enemy"]
+radius = 0.5
+height = 2.0
 
-[node name="ChunkManager" type="Node3D" parent="."]
-script = ExtResource("3_chunk")
+[node name="Main" type="Node3D"]
 
-[node name="Forest" parent="." instance=ExtResource("4_forest")]
+[node name="Terrain" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("8_terrain_collider")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2037807538]
+[node name="TerrainMesh" parent="Terrain" instance=ExtResource("6_terrain")]
+
+[node name="NatureSpawner" type="Node3D" parent="."]
+script = ExtResource("7_nature")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1622374825]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 10, 15, 10)
 shadow_enabled = true
 
-[node name="Player" type="CharacterBody3D" parent="." unique_id=1113429672]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+[node name="DayNightCycle" type="Node3D" parent="."]
+script = ExtResource("3_daynight")
+day_duration = 120.0
+start_time = 0.35
+
+[node name="Player" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
 collision_layer = 2
 collision_mask = 1
 script = ExtResource("1_player")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=1977544633]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_1")
 
-[node name="MeshPivot" type="Node3D" parent="Player" unique_id=1215972989]
+[node name="MeshPivot" type="Node3D" parent="Player"]
 
-[node name="Body" type="MeshInstance3D" parent="Player/MeshPivot" unique_id=222119620]
+[node name="Body" type="MeshInstance3D" parent="Player/MeshPivot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 mesh = SubResource("CapsuleMesh_1")
 surface_material_override/0 = SubResource("StandardMaterial3D_player")
 
-[node name="CameraPivot" type="Node3D" parent="Player" unique_id=218883027]
+[node name="CameraPivot" type="Node3D" parent="Player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 
-[node name="SpringArm3D" type="SpringArm3D" parent="Player/CameraPivot" unique_id=173087197]
+[node name="SpringArm3D" type="SpringArm3D" parent="Player/CameraPivot"]
 transform = Transform3D(1, 0, 0, 0, 0.966, 0.259, 0, -0.259, 0.966, 0, 0, 0)
-spring_length = 5.0
+spring_length = 1
 
-[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D" unique_id=2072144184]
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 fov = 70.0
 
-[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=857627980]
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
 
-[node name="HeartUI" type="Control" parent="CanvasLayer" unique_id=1059253566]
+[node name="HeartUI" type="Control" parent="CanvasLayer"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -85,3 +103,39 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_ui")
+
+[node name="Enemy1" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 10, 10)
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("4_enemy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Enemy1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+shape = SubResource("CapsuleShape3D_enemy")
+
+[node name="Model" parent="Enemy1" instance=ExtResource("5_enemy_model")]
+
+[node name="Enemy2" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 10, 8)
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("4_enemy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Enemy2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+shape = SubResource("CapsuleShape3D_enemy")
+
+[node name="Model" parent="Enemy2" instance=ExtResource("5_enemy_model")]
+
+[node name="Enemy3" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 10, -15)
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("4_enemy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Enemy3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+shape = SubResource("CapsuleShape3D_enemy")
+
+[node name="Model" parent="Enemy3" instance=ExtResource("5_enemy_model")]

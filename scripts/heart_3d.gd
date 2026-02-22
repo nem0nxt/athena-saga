@@ -27,6 +27,10 @@ func set_bpm(bpm: float) -> void:
 	var speed = clamp(bpm / 60.0, 0.6, 3.0)
 	anim_player.speed_scale = speed
 
+func stop_animation() -> void:
+	if anim_player:
+		anim_player.stop()
+
 ## Call from HeartSystemUI on each beat to sync 3D heart with sound
 func sync_to_beat() -> void:
 	if anim_player and anim_name != "":
